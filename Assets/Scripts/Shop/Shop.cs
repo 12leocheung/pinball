@@ -55,6 +55,9 @@ namespace Pinball
         }
 
         PixelText _coinText;
+        PixelText _shopHeader;
+        PixelText _libTabItems;
+        PixelText _libTabWild;
         PixelText _tooltip;
         PixelText _result;
         PixelText _bagHeader;
@@ -86,6 +89,44 @@ namespace Pinball
 
         readonly Drag _drag = new Drag();
 
+        enum PressKind
+        {
+            None, Continue, Reroll, Sell, Card, Library, LibTabItems, LibTabWilds, Bag, Wild, Placed
+        }
+
+        // press arms a drag, a hold or a click; only the release decides which one it
+        // was. The shop used to buy on press, which made descriptions unreadable on a
+        // phone and turned every tap into a drag that dropped back in the bag.
+        const float HoldTime = 0.4f;
+        const float LibRowStep = 5.25f;
+        PressKind _press = PressKind.None;
+        int _pressIndex = -1;
+        Vector2Int _pressCell;
+        Vector2 _pressPos;
+        float _pressAt;
+        bool _pressDragged, _pressHeld;
+
+        // sandbox library: the whole catalogue, browsable, nothing random
+        readonly List<BoardItemDef> _libItems = new List<BoardItemDef>();
+        readonly List<WildcardDef> _libWilds = new List<WildcardDef>();
+        bool _libWild;
+        int _libRow, _libStartRow, _libShownRow = -1;
+
+        static readonly Rect LibItemsTabRect = R(RightX - 3.1f, 11.4f, 6.2f, 2.2f);
+        static readonly Rect LibWildTabRect = R(RightX + 3.1f, 11.4f, 6.2f, 2.2f);
+
+        int LibraryCount { get { return _libWild ? _libWilds.Count : _libItems.Count; } }
+        int MaxLibRow { get { return Mathf.Max(0, (LibraryCount + 1) / 2 - 3); } }
+
+        /// <summary>About a dozen screen pixels expressed in world units, so finger
+        /// wobble on a small phone screen never reads as a drag.</summary>
+        static float DragSlop()
+        {
+            var d = PixelDisplay.I;
+            float w = d != null && d.screenRect != null ? d.screenRect.sizeDelta.x : 1920f;
+            return Mathf.Clamp(12f * PixelDisplay.WorldW / Mathf.Max(1f, w), 0.3f, 2.6f);
+        }
+
         static Rect R(float cx, float cy, float w, float h)
         {
             return new Rect(cx - w * 0.5f, cy - h * 0.5f, w, h);
@@ -109,7 +150,12 @@ namespace Pinball
             PixelBox.Draw(_root, new Vector2(LeftX, 11.4f), 12.4f, 2.2f, Pal.Deep2, Pal.Alpha(Pal.Mauve, 0.8f), 42);
             PixelBox.Draw(_root, new Vector2(RightX, 11.4f), 12.4f, 2.2f, Pal.Deep2, Pal.Alpha(Pal.Mauve, 0.8f), 42);
             _bagHeader = Ui.Text(_root, "BAG", new Vector2(LeftX, 11.4f), Pal.Cream, 0.13f, TextAlign.Center, 50, true);
-            Ui.Text(_root, "SHOP", new Vector2(RightX, 11.4f), Pal.Cream, 0.13f, TextAlign.Center, 50, true);
+            _shopHeader = Ui.Text(_root, "SHOP", new Vector2(RightX, 11.4f), Pal.Cream, 0.13f, TextAlign.Center, 50, true);
+            // the sandbox has no stock to sell: its header bar becomes two library tabs
+            _libTabItems = Ui.Text(_root, "ITEMS", new Vector2(RightX - 3.1f, 11.4f), Pal.Cream, 0.105f, TextAlign.Center, 50, true);
+            _libTabWild = Ui.Text(_root, "WILDCARDS", new Vector2(RightX + 3.1f, 11.4f), Pal.Cream, 0.08f, TextAlign.Center, 50, true);
+            _libTabItems.gameObject.SetActive(false);
+            _libTabWild.gameObject.SetActive(false);
 
             _coinText = Ui.Text(_root, "0", new Vector2(LeftX + 4.4f, 9.7f), Pal.Gold, 0.1875f, TextAlign.Left, 51, true);
             var coinIcon = SpriteBank.Make("coin", _root, 51, new Vector2(LeftX - 5.6f, 9.7f));
@@ -223,6 +269,11 @@ namespace Pinball
             _hoverHighlight.transform.localScale = new Vector3(1.9f, 1.9f, 1f);
             _hoverHighlight.gameObject.SetActive(false);
 
+            _libItems.Clear();
+            _libItems.AddRange(Catalog.Items);
+            _libWilds.Clear();
+            _libWilds.AddRange(Catalog.Wildcards);
+
             _root.gameObject.SetActive(false);
         }
 
@@ -233,7 +284,16 @@ namespace Pinball
             _rerollCost = 2;
             _inputLock = 0.25f;
             _root.gameObject.SetActive(true);
-            RerollOffers();
+            _press = PressKind.None;
+            _pressDragged = _pressHeld = false;
+            var gm = GameManager.I;
+            if (gm != null && gm.Sandbox)
+            {
+                _libWild = false;
+                _libRow = _libStartRow = _libShownRow = 0;
+                _offers.Clear(); // sandbox never rolls stock; stale shop offers must not survive
+            }
+            else RerollOffers();
             Refresh();
             _drag.active = false;
             _ghost.gameObject.SetActive(false);
@@ -245,6 +305,7 @@ namespace Pinball
         {
             _active = false;
             _drag.active = false;
+            _press = PressKind.None;
             if (_root != null) _root.gameObject.SetActive(false);
             if (_ghost != null) _ghost.gameObject.SetActive(false);
             if (_gridRoot != null) _gridRoot.SetActive(false);
@@ -283,29 +344,42 @@ namespace Pinball
             var gm = GameManager.I;
             _coinText.Set(gm.Sandbox ? "FREE" : Ui.Fmt(gm.Coins));
             _bagHeader.Set("BAG " + gm.Inventory.Count + "/6");
-            _rerollText.Set(gm.Sandbox ? "REROLL  FREE" : "REROLL  " + _rerollCost);
-            _rerollText.SetColor(gm.Sandbox || gm.Coins >= _rerollCost ? Pal.Mint : Pal.Mauve);
+            _shopHeader.gameObject.SetActive(!gm.Sandbox);
+            _libTabItems.gameObject.SetActive(gm.Sandbox);
+            _libTabWild.gameObject.SetActive(gm.Sandbox);
 
-            for (int i = 0; i < _cards.Count; i++)
+            if (gm.Sandbox)
             {
-                var card = _cards[i];
-                var o = _offers[i];
-                card.offer = o;
-                card.root.SetActive(true);
-                bool wild = o.isWild;
-                var rarity = wild ? o.wdef.rarity : o.item.rarity;
-                card.icon.sprite = SpriteBank.Get(wild ? o.wdef.sprite : o.item.sprite);
-                card.icon.color = o.sold ? new Color(0.4f, 0.38f, 0.45f, 0.6f) : Color.white;
-                card.name.Set(wild ? Ui.Wrap(o.wdef.name, 12) : Ui.Wrap(o.item.name, 12));
-                card.name.SetColor(o.sold ? Pal.Mauve : Pal.Cream);
-                card.price.Set(o.sold ? "" : (gm.Sandbox ? "FREE" : o.price.ToString()));
-                card.price.SetColor(gm.Sandbox || gm.Coins >= o.price ? Pal.Gold : Pal.Rose);
-                card.gem.sprite = SpriteBank.Get("rar_" + rarity.ToString().ToLowerInvariant());
-                card.rarity.Set(wild ? "WILD" : "");
-                card.bg.color = o.sold ? Pal.Ink : Color.Lerp(Pal.Deep2, Pal.RarityColor(rarity), 0.12f);
-                card.soldOverlay.gameObject.SetActive(o.sold);
-                card.soldText.gameObject.SetActive(o.sold);
-                if (card.border != null) card.border.color = o.sold ? Pal.Alpha(Pal.Mauve, 0.4f) : Pal.RarityColor(rarity);
+                _libTabItems.SetColor(_libWild ? Pal.Alpha(Pal.Mauve, 0.9f) : Pal.Cream);
+                _libTabWild.SetColor(_libWild ? Pal.Cream : Pal.Alpha(Pal.Mauve, 0.9f));
+                _rerollText.SetColor(Pal.Mint);
+                BindLibrary();
+            }
+            else
+            {
+                _rerollText.Set("REROLL  " + _rerollCost);
+                _rerollText.SetColor(gm.Coins >= _rerollCost ? Pal.Mint : Pal.Mauve);
+                for (int i = 0; i < _cards.Count; i++)
+                {
+                    var card = _cards[i];
+                    var o = _offers[i];
+                    card.offer = o;
+                    card.root.SetActive(true);
+                    bool wild = o.isWild;
+                    var rarity = wild ? o.wdef.rarity : o.item.rarity;
+                    card.icon.sprite = SpriteBank.Get(wild ? o.wdef.sprite : o.item.sprite);
+                    card.icon.color = o.sold ? new Color(0.4f, 0.38f, 0.45f, 0.6f) : Color.white;
+                    card.name.Set(wild ? Ui.Wrap(o.wdef.name, 12) : Ui.Wrap(o.item.name, 12));
+                    card.name.SetColor(o.sold ? Pal.Mauve : Pal.Cream);
+                    card.price.Set(o.sold ? "" : o.price.ToString());
+                    card.price.SetColor(gm.Coins >= o.price ? Pal.Gold : Pal.Rose);
+                    card.gem.sprite = SpriteBank.Get("rar_" + rarity.ToString().ToLowerInvariant());
+                    card.rarity.Set(wild ? "WILD" : "");
+                    card.bg.color = o.sold ? Pal.Ink : Color.Lerp(Pal.Deep2, Pal.RarityColor(rarity), 0.12f);
+                    card.soldOverlay.gameObject.SetActive(o.sold);
+                    card.soldText.gameObject.SetActive(o.sold);
+                    if (card.border != null) card.border.color = o.sold ? Pal.Alpha(Pal.Mauve, 0.4f) : Pal.RarityColor(rarity);
+                }
             }
 
             for (int i = 0; i < _bagRows.Count; i++)
@@ -338,7 +412,7 @@ namespace Pinball
             _continueText.Set(gm.Sandbox ? "BACK TO TABLE" : "NEXT ROUND");
             _sellText.Set("SELL SLOT - DRAG HERE");
             if (gm.Sandbox)
-                _result.Set("SANDBOX - EVERYTHING IS FREE\nONE WILDCARD SLOT\n" + Ui.Clock(gm.SandboxClock) +
+                _result.Set("SANDBOX - EVERYTHING IS FREE\nLIBRARY TAKES ANY ITEM\nONE WILDCARD SLOT\n" + Ui.Clock(gm.SandboxClock) +
                             " LEFT   CREDITS " + GameManager.SandboxCredits + "\nSEED " + gm.Seed);
             else
                 _result.Set("ROUND " + gm.Round + " CLEARED\n+" + _earned + " COINS   SCORE " + Ui.Fmt(gm.Score) +
@@ -349,7 +423,7 @@ namespace Pinball
         {
             if (!_active) return;
             if (Menus.I != null && Menus.I.Paused) return;
-            if (_inputLock > 0f) { _inputLock -= Time.unscaledDeltaTime; return; }
+            if (_inputLock > 0f) { _inputLock -= Time.unscaledDeltaTime; _press = PressKind.None; return; }
             var m = PixelDisplay.I.MouseWorld;
 
             if (_drag.active)
@@ -360,91 +434,191 @@ namespace Pinball
             }
 
             UpdateHover(m);
-            if (InputHub.MousePressed) HandlePress(m);
+
+            // a press only arms: moving makes it a drag, holding makes it a read,
+            // letting go without either makes it a click
+            if (InputHub.MousePressed) { BeginPress(m); return; }
+            if (_press != PressKind.None) { AdvancePress(m); return; }
             if (InputHub.RerollPressed) DoReroll();
         }
 
-        void HandlePress(Vector2 m)
+        void BeginPress(Vector2 m)
         {
-            if (ContinueRect.Contains(m))
+            var gm = GameManager.I;
+            _press = PressKind.None;
+            _pressIndex = -1;
+            _pressPos = m;
+            _pressAt = Time.unscaledTime;
+            _pressDragged = false;
+            _pressHeld = false;
+
+            if (ContinueRect.Contains(m)) { _press = PressKind.Continue; return; }
+            if (RerollRect.Contains(m)) { _press = PressKind.Reroll; return; }
+            if (SellRect.Contains(m)) { _press = PressKind.Sell; return; }
+
+            if (gm.Sandbox)
             {
-                Sfx.Play("click");
-                var gm = GameManager.I;
-                if (gm.Sandbox)
-                {
-                    gm.CloseSandboxShop();
-                }
-                else
-                {
-                    Hide();
-                    gm.ContinueToNextRound();
-                }
-                return;
+                if (LibItemsTabRect.Contains(m)) { _press = PressKind.LibTabItems; return; }
+                if (LibWildTabRect.Contains(m)) { _press = PressKind.LibTabWilds; return; }
             }
-            if (RerollRect.Contains(m))
-            {
-                DoReroll();
-                return;
-            }
-            if (SellRect.Contains(m)) return;
 
             for (int i = 0; i < _cards.Count; i++)
             {
                 var card = _cards[i];
+                if (card.root == null || !card.root.activeSelf) continue;
                 var rect = R(card.root.transform.localPosition.x, card.root.transform.localPosition.y, 6.1f, 4.9f);
-                if (rect.Contains(m))
+                if (!rect.Contains(m)) continue;
+                if (gm.Sandbox)
                 {
-                    BuyOffer(_offers[i]);
-                    return;
+                    int lib = _libRow * 2 + i;
+                    if (lib >= LibraryCount) return;
+                    _press = PressKind.Library;
+                    _pressIndex = lib;
+                    _libStartRow = _libRow;
                 }
+                else
+                {
+                    _press = PressKind.Card;
+                    _pressIndex = i;
+                }
+                return;
             }
 
             for (int i = 0; i < _bagRows.Count; i++)
             {
-                if (i >= GameManager.I.Inventory.Count) break;
+                if (i >= gm.Inventory.Count) break;
                 var rect = R(_bagRows[i].root.transform.localPosition.x, _bagRows[i].root.transform.localPosition.y, 12.2f, 2.6f);
-                if (rect.Contains(m))
-                {
-                    StartDragItem(i);
-                    return;
-                }
+                if (rect.Contains(m)) { _press = PressKind.Bag; _pressIndex = i; return; }
             }
 
-            for (int i = 0; i < GameManager.I.Wildcards.Count; i++)
+            for (int i = 0; i < gm.Wildcards.Count; i++)
             {
                 var rect = R(_wildSlots[i].transform.localPosition.x, _wildSlots[i].transform.localPosition.y, 1.9f, 2.1f);
-                if (rect.Contains(m))
-                {
-                    StartDragWildcard(i);
-                    return;
-                }
+                if (rect.Contains(m)) { _press = PressKind.Wild; _pressIndex = i; return; }
             }
 
-            // placed modules can be dragged off the board
             if (BoardRect.Contains(m))
             {
                 var cell = BoardGrid.Nearest(m);
-                var mod = GameManager.I.Table.ModuleAt(cell);
-                if (mod != null)
-                {
-                    var def = mod.def;
-                    GameManager.I.Table.RemoveModule(cell);
-                    _drag.active = true;
-                    _drag.item = def;
-                    _drag.wild = null;
-                    _drag.sourceCell = cell;
-                    _drag.wildIndex = -1;
-                    _ghost.sprite = SpriteBank.Get(def.sprite);
-                    _ghost.gameObject.SetActive(true);
-                    _gridRoot.SetActive(true);
-                    Juice.Float(mod.transform.position, "PICKED UP", Pal.Sand, 1f, 0.9f, 1.6f);
-                    return;
-                }
+                if (gm.Table.ModuleAt(cell) != null) { _press = PressKind.Placed; _pressCell = cell; }
             }
         }
 
-        void BuyOffer(Offer o)
+        /// <summary>How far a finger has to travel before a press counts as a drag.
+        /// A card needs a deliberate swipe: on a phone a few pixels of wobble while
+        /// reading it used to read as a drag, which bought the item before the hold
+        /// ever registered. A tile already on the board follows the finger at once.</summary>
+        float PressSlop()
         {
+            if (_press == PressKind.Placed || _press == PressKind.Wild) return DragSlop();
+            return DragSlop() * 2.6f;
+        }
+
+        /// <summary>Nearest cell a tile can actually go into. Row 0 hangs over the
+        /// flippers and is never placeable, so a drop in the lower band of the board
+        /// snaps up into row 1 instead of silently bouncing back to the bag.</summary>
+        static Vector2Int DropCell(Vector2 world)
+        {
+            var cell = BoardGrid.Nearest(world);
+            cell.y = Mathf.Clamp(cell.y, 1, BoardGrid.Rows - 1);
+            return cell;
+        }
+
+        void AdvancePress(Vector2 m)
+        {
+            if (!_pressDragged && (m - _pressPos).magnitude > PressSlop()) _pressDragged = true;
+            if (!_pressHeld && Time.unscaledTime - _pressAt >= HoldTime) _pressHeld = true;
+
+            if (_pressDragged)
+            {
+                switch (_press)
+                {
+                    case PressKind.Bag: StartDragItem(_pressIndex); break;
+                    case PressKind.Wild: StartDragWildcard(_pressIndex); break;
+                    case PressKind.Placed: StartDragPlaced(_pressCell); break;
+                    case PressKind.Card:
+                        BuyOffer(_pressIndex, true);
+                        // a blocked buy (coins, bag, wildcard slot) must not retry
+                        // every frame of the drag or the toast is spammed
+                        if (!_drag.active) _press = PressKind.None;
+                        break;
+                    case PressKind.Library:
+                        // a swipe across the grid walks the library: sliding up reveals
+                        // later rows, the way a touch list is expected to move
+                        _libRow = Mathf.Clamp(_libStartRow + Mathf.RoundToInt((m.y - _pressPos.y) / LibRowStep), 0, MaxLibRow);
+                        if (_libRow != _libShownRow) BindLibrary();
+                        break;
+                }
+            }
+
+            if (_drag.active)
+            {
+                UpdateDrag(m);
+                if (InputHub.MouseReleased) { _press = PressKind.None; EndDrag(m); }
+                return;
+            }
+
+            if (!InputHub.MouseReleased) return;
+            var kind = _press;
+            int index = _pressIndex;
+            _press = PressKind.None;
+            // holding means "let me read this" - it never also fires the action
+            if (!_pressHeld && !_pressDragged) Click(kind, index);
+        }
+
+        void Click(PressKind kind, int index)
+        {
+            var gm = GameManager.I;
+            switch (kind)
+            {
+                case PressKind.Continue:
+                    Sfx.Play("click");
+                    if (gm.Sandbox) gm.CloseSandboxShop();
+                    else { Hide(); gm.ContinueToNextRound(); }
+                    break;
+                case PressKind.Reroll:
+                    if (gm.Sandbox) PageLibrary();
+                    else DoReroll();
+                    break;
+                case PressKind.Card:
+                    BuyOffer(index, false);
+                    break;
+                case PressKind.Library:
+                    TakeLibrary(index);
+                    break;
+                case PressKind.LibTabItems:
+                    if (_libWild) { _libWild = false; _libRow = 0; Sfx.Play("click"); Refresh(); }
+                    break;
+                case PressKind.LibTabWilds:
+                    if (!_libWild) { _libWild = true; _libRow = 0; Sfx.Play("click"); Refresh(); }
+                    break;
+            }
+        }
+
+        void StartDragPlaced(Vector2Int cell)
+        {
+            var gm = GameManager.I;
+            var mod = gm.Table.ModuleAt(cell);
+            if (mod == null) return;
+            var def = mod.def;
+            gm.Table.RemoveModule(cell);
+            Sfx.Play("click");
+            _drag.active = true;
+            _drag.item = def;
+            _drag.wild = null;
+            _drag.sourceCell = cell;
+            _drag.wildIndex = -1;
+            _ghost.sprite = SpriteBank.Get(def.sprite);
+            _ghost.gameObject.SetActive(true);
+            _gridRoot.SetActive(true);
+            Juice.Float(mod.transform.position, "PICKED UP", Pal.Sand, 1f, 0.9f, 1.6f);
+            Refresh();
+        }
+
+        void BuyOffer(int index, bool thenDrag)
+        {
+            if (index < 0 || index >= _offers.Count) return;
+            var o = _offers[index];
             var gm = GameManager.I;
             if (o.sold) return;
             if (!gm.Sandbox && gm.Coins < o.price)
@@ -475,23 +649,96 @@ namespace Pinball
             {
                 gm.AddWildcard(o.wdef);
                 Refresh();
+                return;
             }
-            else
+
+            gm.Inventory.Add(o.item);
+            // a drag that started on the card buys and keeps hold of the tile; a tap
+            // just drops it in the bag so the next touch can place it
+            if (thenDrag) StartDragItem(gm.Inventory.Count - 1);
+            else Refresh();
+        }
+
+        /// <summary>Sandbox only: the library is the whole catalogue, free to take.</summary>
+        void TakeLibrary(int index)
+        {
+            var gm = GameManager.I;
+            if (index < 0) return;
+            if (_libWild)
             {
-                gm.Inventory.Add(o.item);
-                StartDragItem(gm.Inventory.Count - 1);
+                if (index >= _libWilds.Count) return;
+                if (gm.Wildcards.Count >= 1)
+                {
+                    Juice.Float(new Vector2(0f, 10f), "ONE WILDCARD PER SANDBOX", Pal.Rose, 1.05f, 1.1f, 1.8f);
+                    return;
+                }
+                gm.AddWildcard(_libWilds[index]);
+                Sfx.Play("buy");
+                Juice.Spark(new Vector2(0f, 6f), Pal.Gold, 8, 8f);
+                Juice.Flash(0.06f);
+                Refresh();
+                return;
             }
+
+            if (index >= _libItems.Count) return;
+            if (gm.Inventory.Count >= 6)
+            {
+                Juice.Float(new Vector2(0f, 10f), "BAG IS FULL", Pal.Rose, 1.1f, 1.1f, 1.8f);
+                return;
+            }
+            gm.Inventory.Add(_libItems[index]);
+            Sfx.Play("buy");
+            Juice.Spark(new Vector2(12f, 6f), Pal.Gold, 8, 8f);
+            Refresh();
+        }
+
+        void PageLibrary()
+        {
+            if (MaxLibRow <= 0) return;
+            _libRow = (_libRow + 3) % (MaxLibRow + 1);
+            Sfx.Play("click");
+            BindLibrary();
+        }
+
+        void BindLibrary()
+        {
+            _libShownRow = _libRow;
+            int count = LibraryCount;
+            for (int i = 0; i < _cards.Count; i++)
+            {
+                var card = _cards[i];
+                int idx = _libRow * 2 + i;
+                bool has = idx < count;
+                if (card.root.activeSelf != has) card.root.SetActive(has);
+                if (!has) continue;
+                var def = _libWild ? null : _libItems[idx];
+                var wdef = _libWild ? _libWilds[idx] : null;
+                var rarity = _libWild ? wdef.rarity : def.rarity;
+                card.offer = null;
+                card.icon.sprite = SpriteBank.Get(_libWild ? wdef.sprite : def.sprite);
+                card.icon.color = Color.white;
+                card.name.Set(Ui.Wrap(_libWild ? wdef.name : def.name, 12));
+                card.name.SetColor(Pal.Cream);
+                card.price.Set("");
+                card.gem.sprite = SpriteBank.Get("rar_" + rarity.ToString().ToLowerInvariant());
+                card.rarity.Set(_libWild ? "WILD" : def.kind.ToString().ToUpperInvariant());
+                card.bg.color = Color.Lerp(Pal.Deep2, Pal.RarityColor(rarity), 0.12f);
+                card.soldOverlay.gameObject.SetActive(false);
+                card.soldText.gameObject.SetActive(false);
+                if (card.border != null) card.border.color = Pal.RarityColor(rarity);
+            }
+            int first = _libRow * 2 + 1;
+            int last = Mathf.Min(count, _libRow * 2 + 6);
+            _rerollText.Set(count == 0 ? "LIBRARY EMPTY" : first + "-" + last + " / " + count);
         }
 
         void DoReroll()
         {
             var gm = GameManager.I;
-            if (!gm.Sandbox)
-            {
-                if (gm.Coins < _rerollCost) return;
-                gm.Coins -= _rerollCost;
-                _rerollCost += 1;
-            }
+            if (gm.Sandbox) { PageLibrary(); return; }
+            if (gm.Coins < _rerollCost) return;
+            gm.Coins -= _rerollCost;
+            _rerollCost += 1;
             RerollOffers();
             Refresh();
             Sfx.Play("click");
@@ -549,7 +796,7 @@ namespace Pinball
                 _hoverHighlight.gameObject.SetActive(overBoard);
                 if (overBoard)
                 {
-                    var cell = BoardGrid.Nearest(m);
+                    var cell = DropCell(m);
                     _drag.hoverCell = cell;
                     var pos = BoardGrid.Center(cell);
                     _hoverHighlight.transform.position = new Vector3(pos.x, pos.y, 0f);
@@ -620,7 +867,7 @@ namespace Pinball
             {
                 if (BoardRect.Contains(m))
                 {
-                    var cell = BoardGrid.Nearest(m);
+                    var cell = DropCell(m);
                     if (gm.Table.IsCellFree(cell))
                     {
                         gm.Table.PlaceModule(_drag.item, cell);
@@ -648,11 +895,29 @@ namespace Pinball
         void UpdateHover(Vector2 m)
         {
             string tip = "";
+            bool sandbox = GameManager.I.Sandbox;
             for (int i = 0; i < _cards.Count; i++)
             {
                 var card = _cards[i];
+                if (card.root == null || !card.root.activeSelf) continue;
                 var rect = R(card.root.transform.localPosition.x, card.root.transform.localPosition.y, 6.1f, 4.9f);
                 if (!rect.Contains(m)) continue;
+                if (sandbox)
+                {
+                    int idx = _libRow * 2 + i;
+                    if (idx >= LibraryCount) break;
+                    if (_libWild)
+                    {
+                        var w = _libWilds[idx];
+                        tip = w.name + "\n" + Ui.Wrap(w.ConditionText(), 26) + "\nREWARD " + w.RewardText();
+                    }
+                    else
+                    {
+                        var it = _libItems[idx];
+                        tip = it.name + "\n" + Ui.Wrap(it.desc, 26);
+                    }
+                    break;
+                }
                 var o = _offers[i];
                 if (o.isWild)
                     tip = o.wdef.name + "\n" + Ui.Wrap(o.wdef.ConditionText(), 26) + "\nREWARD " + o.wdef.RewardText();
@@ -682,11 +947,10 @@ namespace Pinball
                     break;
                 }
             }
-            bool sandbox = GameManager.I.Sandbox;
             if (tip == "" && SellRect.Contains(m)) tip = "DRAG A TILE HERE TO SELL IT\nFOR HALF ITS VALUE";
             if (tip == "" && ContinueRect.Contains(m)) tip = sandbox ? "BACK TO THE TABLE\nTHE CLOCK STOPS IN THE SHOP" : "NEXT ROUND.\nTHE QUOTA GROWS";
-            if (tip == "" && RerollRect.Contains(m)) tip = sandbox ? "NEW OFFERS\nFREE IN THE SANDBOX" : "NEW OFFERS\nFOR " + _rerollCost + " COINS";
-            if (tip == "" && sandbox) tip = "EVERYTHING IS FREE HERE";
+            if (tip == "" && RerollRect.Contains(m)) tip = sandbox ? "PAGE THROUGH THE LIBRARY\nSIX AT A TIME" : "NEW OFFERS\nFOR " + _rerollCost + " COINS";
+            if (tip == "" && sandbox) tip = "TAP TO TAKE   HOLD TO READ";
             _tooltip.Set(tip);
         }
     }

@@ -549,8 +549,12 @@ namespace Pinball
             var m = Mouse.current;
             HasMouse = m != null || InputHub.UsedTouch;
 
-            // a touch is a pointer too: it drives the same world position the menus read
-            if (InputHub.HasTouch) MouseScreen = InputHub.TouchPos;
+            // a touch is a pointer too: it drives the same world position the menus read.
+            // Once a finger has been seen the pointer stays on the touch position, so the
+            // frame a finger lifts still reads where it lifted. Without this it fell
+            // through to the desktop mouse (0,0 on a phone) and a dragged tile was
+            // released off the board, which is why placed items snapped back.
+            if (InputHub.HasTouch || InputHub.UsedTouch) MouseScreen = InputHub.TouchPos;
             else if (m != null) MouseScreen = m.position.ReadValue();
             float cx = Screen.width * 0.5f, cy = Screen.height * 0.5f;
             Vector2 local = MouseScreen - new Vector2(cx, cy);
@@ -608,6 +612,9 @@ namespace Pinball
         /// <summary>Edge events and position, so touches can drive the menus as a virtual mouse.</summary>
         public static bool TouchBegin, TouchEnd, TouchPause;
         public static Vector2 TouchPos;
+        /// <summary>Last frame a finger was actually down: the pointer stays on the
+        /// touch for the release frame instead of snapping to the desktop mouse.</summary>
+        public static float LastTouchAt = -99f;
         static int _prevTouches;
         static bool _twoFinger;
 
@@ -621,7 +628,7 @@ namespace Pinball
             TouchBegin = TouchEnd = TouchPause = false;
             var touches = UnityEngine.InputSystem.EnhancedTouch.Touch.activeTouches;
             HasTouch = touches.Count > 0;
-            if (HasTouch) UsedTouch = true;
+            if (HasTouch) { UsedTouch = true; LastTouchAt = Time.unscaledTime; }
             if (_prevTouches > 0 && touches.Count == 0) TouchEnd = true;
             _prevTouches = touches.Count;
 
@@ -691,7 +698,7 @@ namespace Pinball
         public static bool MousePressed { get { return TouchBegin || (M != null && M.leftButton.wasPressedThisFrame); } }
         public static bool MouseDown { get { return HasTouch || (M != null && M.leftButton.isPressed); } }
         public static bool MouseReleased { get { return TouchEnd || (M != null && M.leftButton.wasReleasedThisFrame); } }
-        public static Vector2 MousePos { get { return HasTouch ? TouchPos : (M != null ? M.position.ReadValue() : TouchPos); } }
+        public static Vector2 MousePos { get { return HasTouch || UsedTouch ? TouchPos : (M != null ? M.position.ReadValue() : TouchPos); } }
 
         public static bool StartPressed
         {
