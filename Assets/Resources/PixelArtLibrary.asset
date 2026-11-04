@@ -1,0 +1,333 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 130693245041ef045a57c5e1e6ceb18e, type: 3}
+  m_Name: PixelArtLibrary
+  m_EditorClassIdentifier: Assembly-CSharp::Pinball.PixelSpriteLibrary
+  entries:
+  - key: playfield
+    sprite: {fileID: 21300000, guid: cbe82a0b070c3404b9baedacfe32d3e4, type: 3}
+  - key: rail_h
+    sprite: {fileID: 21300000, guid: 3f7848372ff57824497074d66d039d8f, type: 3}
+  - key: rail_v
+    sprite: {fileID: 21300000, guid: 18a72d60e61d898449bceb827cd7d568, type: 3}
+  - key: rail_cap
+    sprite: {fileID: 21300000, guid: cd437601d75820f408f2d20485927ad8, type: 3}
+  - key: flipper
+    sprite: {fileID: 21300000, guid: f98d77185024b594fbde9c067ad8e136, type: 3}
+  - key: flipper_r
+    sprite: {fileID: 21300000, guid: c1ed3a0b8e5d5bd4babb0ab2082b8c92, type: 3}
+  - key: ball
+    sprite: {fileID: 21300000, guid: c89e5f009640f224aa38f87191bbb886, type: 3}
+  - key: bumper_a
+    sprite: {fileID: 21300000, guid: ced526124d015ba48a0b9171a29c97fd, type: 3}
+  - key: bumper_b
+    sprite: {fileID: 21300000, guid: cdbc793a61bcd874da4d0d7dfb492616, type: 3}
+  - key: peg
+    sprite: {fileID: 21300000, guid: 1ec62c5d86a934f458d362b3aed3bc84, type: 3}
+  - key: lane
+    sprite: {fileID: 21300000, guid: e1311f8aeaa3f5840ba8b1d4141473e2, type: 3}
+  - key: plunger
+    sprite: {fileID: 21300000, guid: 48ff917d28fa61c429df66048efe1383, type: 3}
+  - key: drain
+    sprite: {fileID: 21300000, guid: 8ed97e99a3b8b104096aca92274abd41, type: 3}
+  - key: ring
+    sprite: {fileID: 21300000, guid: 5937fb7d71036fe419a0a5857ee37ecf, type: 3}
+  - key: spark
+    sprite: {fileID: 21300000, guid: db833c5ee596ad74ca71cc00c77cc34a, type: 3}
+  - key: trail
+    sprite: {fileID: 21300000, guid: b4e48a4b2884b2744af9b85159a1daa3, type: 3}
+  - key: item_spring
+    sprite: {fileID: 21300000, guid: b8948033d2f97024f948f09c50ae2d22, type: 3}
+  - key: item_coinpress
+    sprite: {fileID: 21300000, guid: 595cdf841027cee439146f7c24fce28f, type: 3}
+  - key: item_chime
+    sprite: {fileID: 21300000, guid: ed94f21a038b36344b6c863ca71d5087, type: 3}
+  - key: item_candle
+    sprite: {fileID: 21300000, guid: 210f0ccf6f8dbf24a81a99a6748c0de6, type: 3}
+  - key: item_ramp
+    sprite: {fileID: 21300000, guid: b410824d493e0554289899cd1faaeb3d, type: 3}
+  - key: item_prism
+    sprite: {fileID: 21300000, guid: a84f8679bf278fb498b494e19bd4f9a7, type: 3}
+  - key: item_lodestone
+    sprite: {fileID: 21300000, guid: 740eac97ebb5a4046a3d437e78feef9c, type: 3}
+  - key: item_net
+    sprite: {fileID: 21300000, guid: 309146a5c09fd974891e8cb3cfd9847c, type: 3}
+  - key: item_rail
+    sprite: {fileID: 21300000, guid: a4803f5428670e54d997485ca300d1af, type: 3}
+  - key: item_gear
+    sprite: {fileID: 21300000, guid: cf8a0b34ac33d2349b3d44823220766b, type: 3}
+  - key: item_locket
+    sprite: {fileID: 21300000, guid: 67ef94414656b8a4e9e939314484d0e7, type: 3}
+  - key: item_mirror
+    sprite: {fileID: 21300000, guid: fd72140e61db286428b02b4e199d864a, type: 3}
+  - key: item_trampoline
+    sprite: {fileID: 21300000, guid: b83ab62bc6c359d4ba536cdee722432f, type: 3}
+  - key: item_idol
+    sprite: {fileID: 21300000, guid: daff0c0da74ea864dbb861a99ca66e4d, type: 3}
+  - key: item_toad
+    sprite: {fileID: 21300000, guid: bf0e8cf952d85284492a1b146e64ac72, type: 3}
+  - key: item_torch
+    sprite: {fileID: 21300000, guid: 11e7c2e4cc68c634699986c430e3fa8a, type: 3}
+  - key: item_cannon
+    sprite: {fileID: 21300000, guid: b6d37cd55ea5bab44a24ee0505aca003, type: 3}
+  - key: item_honey
+    sprite: {fileID: 21300000, guid: d4fc16483a8795c4c81309fcaca15423, type: 3}
+  - key: item_starspire
+    sprite: {fileID: 21300000, guid: 08562d3df73e2cd4ca54a0047f0d52fa, type: 3}
+  - key: wild_moon
+    sprite: {fileID: 21300000, guid: 39ff68c4f9cee2c439b6ef6e9d8aa73b, type: 3}
+  - key: wild_sun
+    sprite: {fileID: 21300000, guid: 12e67be0f4946554cb3ffc34e5c38a0e, type: 3}
+  - key: wild_comet
+    sprite: {fileID: 21300000, guid: 399fc522d635c4e47b29e32db142171b, type: 3}
+  - key: wild_key
+    sprite: {fileID: 21300000, guid: de0f46398e742974fb351f5c797d02b1, type: 3}
+  - key: wild_eye
+    sprite: {fileID: 21300000, guid: 7a9edb90454a60b40b6bb3eb858566da, type: 3}
+  - key: wild_crown
+    sprite: {fileID: 21300000, guid: 5d7aa6a1036511e4d91bca130a09a9e7, type: 3}
+  - key: wild_feather
+    sprite: {fileID: 21300000, guid: f298deb1fd3c7fa41acd14b3b3c522fb, type: 3}
+  - key: wild_mask
+    sprite: {fileID: 21300000, guid: 4b6126f3baa163b41992826ebb464452, type: 3}
+  - key: wild_flame
+    sprite: {fileID: 21300000, guid: 64aff1c8a78d34f4fbb41f246f14af8c, type: 3}
+  - key: wild_bell
+    sprite: {fileID: 21300000, guid: 56af7d4dd0a70f84d8a7867ab0df5f0f, type: 3}
+  - key: wild_acorn
+    sprite: {fileID: 21300000, guid: 556c2ff39bf05d8468c59b2a39b2a829, type: 3}
+  - key: wild_shell
+    sprite: {fileID: 21300000, guid: bb6fa5cbbb2ab654e8c1bc339b39bd3b, type: 3}
+  - key: wild_wind
+    sprite: {fileID: 21300000, guid: d3e5500a926fecf409cc1d3767bdbfe2, type: 3}
+  - key: wild_vine
+    sprite: {fileID: 21300000, guid: f095b14bf306b474e815525317ee1e8f, type: 3}
+  - key: wild_sand
+    sprite: {fileID: 21300000, guid: 9361614e90893874d929139dbb8ff54f, type: 3}
+  - key: item_belljar
+    sprite: {fileID: 21300000, guid: 88af0b1f5a93750498f44fd4a134ebfa, type: 3}
+  - key: item_inkbottle
+    sprite: {fileID: 21300000, guid: 514e893efdc34c845bbb322484339c22, type: 3}
+  - key: item_glowcap
+    sprite: {fileID: 21300000, guid: 24708e83d0af21242aca03d00354724c, type: 3}
+  - key: item_bonedie
+    sprite: {fileID: 21300000, guid: bc73937107510c54ebace37c88317eda, type: 3}
+  - key: item_kite
+    sprite: {fileID: 21300000, guid: 08ddb88d2bd816a4b8ad9d7d44cccb4a, type: 3}
+  - key: item_brick
+    sprite: {fileID: 21300000, guid: 1332d9b7e3dea09438152b7088bdeca7, type: 3}
+  - key: item_quill
+    sprite: {fileID: 21300000, guid: 252bdcf2cec5e43488435ec66b1d570c, type: 3}
+  - key: item_ironacorn
+    sprite: {fileID: 21300000, guid: d746b3540e00a4545aff3f3648a53c75, type: 3}
+  - key: item_compass
+    sprite: {fileID: 21300000, guid: 4ac81434f7450e44b8afccbc0c7bf6ee, type: 3}
+  - key: item_drum
+    sprite: {fileID: 21300000, guid: 8f2de9210a62b0a42a0647db333a8404, type: 3}
+  - key: item_anvil
+    sprite: {fileID: 21300000, guid: 1ea42a65e05bcb0408d390b2a81c35a6, type: 3}
+  - key: item_harp
+    sprite: {fileID: 21300000, guid: 7cb12714197ff0a4995be028f8c76667, type: 3}
+  - key: item_vial
+    sprite: {fileID: 21300000, guid: a2cadf5ff0f5eb146a8fd5cad9de8ffa, type: 3}
+  - key: item_pinwheel
+    sprite: {fileID: 21300000, guid: 6e7c3119790d28049bfc8c904d0cf56f, type: 3}
+  - key: item_skull
+    sprite: {fileID: 21300000, guid: b311a06257a86b345b8b5fe4f925df49, type: 3}
+  - key: item_hourglass
+    sprite: {fileID: 21300000, guid: 73d202d166cb8a043a1069eefab0f8b0, type: 3}
+  - key: item_ghostlantern
+    sprite: {fileID: 21300000, guid: 06f36141b1fd6a34a941df73c73efa84, type: 3}
+  - key: item_anchor
+    sprite: {fileID: 21300000, guid: cb9e323212ef32b48b642c1c4fd27d5e, type: 3}
+  - key: item_mooncrystal
+    sprite: {fileID: 21300000, guid: c775e45560459e545be7a1ca081208f7, type: 3}
+  - key: item_teapot
+    sprite: {fileID: 21300000, guid: 16f80838ca4ca83479d97935d78120ca, type: 3}
+  - key: item_phoenixegg
+    sprite: {fileID: 21300000, guid: 2d34e7c51be592643a29c93255a42c50, type: 3}
+  - key: item_throne
+    sprite: {fileID: 21300000, guid: 0a961c239e7280e48bee197ad8ba3130, type: 3}
+  - key: item_orrery
+    sprite: {fileID: 21300000, guid: 73c8a132cd6db8647bd1a6fdb33e0aec, type: 3}
+  - key: item_goldenslot
+    sprite: {fileID: 21300000, guid: 3cb770204b50deb499fdec5da7b33c9b, type: 3}
+  - key: item_cometstone
+    sprite: {fileID: 21300000, guid: 6ae80580434b64b42b97a502328f8c72, type: 3}
+  - key: item_monolith
+    sprite: {fileID: 21300000, guid: a30b2b456ac55d04cabd5753c71c2b42, type: 3}
+  - key: item_marbles
+    sprite: {fileID: 21300000, guid: 73f9b5aa6dce78a41a4310e7f3ce44ae, type: 3}
+  - key: item_thimble
+    sprite: {fileID: 21300000, guid: 2d5153330a529a6429dba115cdba1818, type: 3}
+  - key: item_jackstone
+    sprite: {fileID: 21300000, guid: 627c920653153214ca97eff12fa623ac, type: 3}
+  - key: item_saltlick
+    sprite: {fileID: 21300000, guid: 56083ef307a93f743b9697785090cff0, type: 3}
+  - key: item_tinwhistle
+    sprite: {fileID: 21300000, guid: 0c6025ff7f7450a46b65d30b9ad4d505, type: 3}
+  - key: item_tincog
+    sprite: {fileID: 21300000, guid: c53232eb0c62e9345b19dfd4b0cb9343, type: 3}
+  - key: item_domino
+    sprite: {fileID: 21300000, guid: 068fa8e45c1d0084aa70d334664402b7, type: 3}
+  - key: item_inkstamp
+    sprite: {fileID: 21300000, guid: 4461d5c1fdef8b246b65f50a813a5677, type: 3}
+  - key: item_sparkler
+    sprite: {fileID: 21300000, guid: 0127b97b960f41a4698f7a95ee6a80cd, type: 3}
+  - key: item_teacup
+    sprite: {fileID: 21300000, guid: dfa4eea2caedd474191ac96b14514351, type: 3}
+  - key: item_acorncap
+    sprite: {fileID: 21300000, guid: 3d2243b3dc1e6244a84d2b9c528a5c8b, type: 3}
+  - key: item_pebbles
+    sprite: {fileID: 21300000, guid: c1c4daee835b93e43bd12b1edd2afa19, type: 3}
+  - key: item_beads
+    sprite: {fileID: 21300000, guid: 42c88f996fe11754d8b74c9812fe7ec8, type: 3}
+  - key: item_mothpeg
+    sprite: {fileID: 21300000, guid: 9e99e0932e012214fb46365c69e8878d, type: 3}
+  - key: item_tuningfork
+    sprite: {fileID: 21300000, guid: a5a6bc6968088424a9fe975ac698ef10, type: 3}
+  - key: item_sextant
+    sprite: {fileID: 21300000, guid: 5b735ea112ac7ab488bf3011250ddbe1, type: 3}
+  - key: item_cogclock
+    sprite: {fileID: 21300000, guid: 3ea7b4b7c3c31aa419af517c55ce7635, type: 3}
+  - key: item_messagebottle
+    sprite: {fileID: 21300000, guid: 0f475de1b90fbfe438a548d116679063, type: 3}
+  - key: item_quiver
+    sprite: {fileID: 21300000, guid: 7ef8799abedd5f743b3cd401982328ce, type: 3}
+  - key: item_kettle
+    sprite: {fileID: 21300000, guid: d250817d5d800524ea1c5873c991085e, type: 3}
+  - key: item_fishingpole
+    sprite: {fileID: 21300000, guid: 145e806a680154245879f169cc33413e, type: 3}
+  - key: item_paperlantern
+    sprite: {fileID: 21300000, guid: a70ca047bd7100e47ae644305b26b54d, type: 3}
+  - key: item_gearbox
+    sprite: {fileID: 21300000, guid: eaae54a965e3af141acd29230cf1bf0e, type: 3}
+  - key: item_ferrule
+    sprite: {fileID: 21300000, guid: 9b6f7578aa3025449b3324a26648126c, type: 3}
+  - key: item_mothjar
+    sprite: {fileID: 21300000, guid: ffabadb887136f64383b8b90179efb72, type: 3}
+  - key: item_pendulum
+    sprite: {fileID: 21300000, guid: c021ba1d4a7198a4e85ad6d0b477b879, type: 3}
+  - key: item_glasswing
+    sprite: {fileID: 21300000, guid: 76e3d83a2f1346240957304f90cfcccc, type: 3}
+  - key: item_starwheel
+    sprite: {fileID: 21300000, guid: af5a7011563c210448f19875af8f3d22, type: 3}
+  - key: item_reliquary
+    sprite: {fileID: 21300000, guid: a273616144535714ca9ef229f3ed23a7, type: 3}
+  - key: item_astrolabe
+    sprite: {fileID: 21300000, guid: 163c895bf3aa1b24eaeb6003d2c22ae0, type: 3}
+  - key: item_greatbell
+    sprite: {fileID: 21300000, guid: 91efe69e0794a944fb0ba17fdf2bc81a, type: 3}
+  - key: item_loom
+    sprite: {fileID: 21300000, guid: bec52e77b79d4e540a02150bf7336ae2, type: 3}
+  - key: item_darkmirror
+    sprite: {fileID: 21300000, guid: 2263f7c9b993116458e53108e5ccd6c1, type: 3}
+  - key: item_ivorykey
+    sprite: {fileID: 21300000, guid: f4c32f874d884de47a68aa6e4c4a3fcd, type: 3}
+  - key: item_tideclock
+    sprite: {fileID: 21300000, guid: ddb12f9d8edbab64cafbc92f9fa47cb1, type: 3}
+  - key: item_preservejar
+    sprite: {fileID: 21300000, guid: 135c8417b26bf3343869b1b6052c5122, type: 3}
+  - key: item_skywheel
+    sprite: {fileID: 21300000, guid: 299611a7f1284b84ca6245c0087d04cf, type: 3}
+  - key: item_sunstone
+    sprite: {fileID: 21300000, guid: 8dfd730fb2e47384ebf68a0be564e005, type: 3}
+  - key: item_dragonhoard
+    sprite: {fileID: 21300000, guid: cd3ede254b5b37045a91425b535e0004, type: 3}
+  - key: item_obsidian
+    sprite: {fileID: 21300000, guid: 8476148e89264574c9f448c7874974a3, type: 3}
+  - key: item_singingheart
+    sprite: {fileID: 21300000, guid: ae11d20c166d3d2468bfdcb826dec43c, type: 3}
+  - key: item_stormorb
+    sprite: {fileID: 21300000, guid: 7ccc72692bd6f1a4498dde9c83e992eb, type: 3}
+  - key: wild_lantern
+    sprite: {fileID: 21300000, guid: 5bc798970dc0f7c44a7d28682ad3d7f8, type: 3}
+  - key: wild_moth
+    sprite: {fileID: 21300000, guid: 8f1c1e6a56e5463429777175f4c83eb1, type: 3}
+  - key: wild_knot
+    sprite: {fileID: 21300000, guid: ec324497e64c576438878a4f787ea3ce, type: 3}
+  - key: wild_tide
+    sprite: {fileID: 21300000, guid: 93e78a26c391ad342b43ba7f27f2dd81, type: 3}
+  - key: wild_star
+    sprite: {fileID: 21300000, guid: 218825915763a8e41a9900f54206c345, type: 3}
+  - key: wild_worm
+    sprite: {fileID: 21300000, guid: 3a1e375d545f8c84bac4dc7e0eb7e444, type: 3}
+  - key: wild_inkquill
+    sprite: {fileID: 21300000, guid: 32e27f21958a8c943b288b340462e56d, type: 3}
+  - key: wild_bonecharm
+    sprite: {fileID: 21300000, guid: 93770a390ffb4a0438250d357b3b7cf3, type: 3}
+  - key: wild_copperring
+    sprite: {fileID: 21300000, guid: 1fe88df7c96a47640aca22b0cb20505b, type: 3}
+  - key: wild_glasspetal
+    sprite: {fileID: 21300000, guid: 27833693678dfad49a023b1cf6c53df1, type: 3}
+  - key: wild_waxseal
+    sprite: {fileID: 21300000, guid: cc3d4d6fd4744584abbbf38201f98eaa, type: 3}
+  - key: wild_ironvow
+    sprite: {fileID: 21300000, guid: 892e85fcd779a3f4fb171e31c806f53f, type: 3}
+  - key: wild_mothlight
+    sprite: {fileID: 21300000, guid: dbc4f5521b19cb6429509ccda8112e0b, type: 3}
+  - key: wild_deepbell
+    sprite: {fileID: 21300000, guid: df7223c96e758b74ab4ba0af29f9fd95, type: 3}
+  - key: wild_sunwheel
+    sprite: {fileID: 21300000, guid: c4902a71e898b9e448fa9fa4ff798ad8, type: 3}
+  - key: wild_blackflame
+    sprite: {fileID: 21300000, guid: 6538c608632e5614ba6e57a0eb77eca6, type: 3}
+  - key: wild_sundial
+    sprite: {fileID: 21300000, guid: 21f8219886334d4449bcf9cc43c3785d, type: 3}
+  - key: wild_kingseye
+    sprite: {fileID: 21300000, guid: cdf0636704c0b0742b1b80d33d77d927, type: 3}
+  - key: boss_collector
+    sprite: {fileID: 21300000, guid: e3ee7013bbf62a84e9c06bcc58a16055, type: 3}
+  - key: boss_eclipse
+    sprite: {fileID: 21300000, guid: 1e89a93d807e63b4c93dfc7e3662c84e, type: 3}
+  - key: boss_warden
+    sprite: {fileID: 21300000, guid: 350bc1924358de144b6ccaf83ba20759, type: 3}
+  - key: boss_undertow
+    sprite: {fileID: 21300000, guid: 049574f9ab87db742bf5f6e138a6b091, type: 3}
+  - key: boss_hollow
+    sprite: {fileID: 21300000, guid: ab563ab73797ab349b096624766865e6, type: 3}
+  - key: boss_gardener
+    sprite: {fileID: 21300000, guid: 89dc24ce565b33f49ae6ef41f0840341, type: 3}
+  - key: ui_solid
+    sprite: {fileID: 21300000, guid: 13555b171acfbab419e77bb0e1f96ccc, type: 3}
+  - key: ui_grain
+    sprite: {fileID: 21300000, guid: 7bfcd9f2a235d3347be59d2af1cd8648, type: 3}
+  - key: grid_cell
+    sprite: {fileID: 21300000, guid: eadea613aeaf17540a31b778adf16b80, type: 3}
+  - key: card_slot
+    sprite: {fileID: 21300000, guid: e88a7cf42ccf6544396f0fb5bfb266d0, type: 3}
+  - key: coin
+    sprite: {fileID: 21300000, guid: 3c8da99d31bc8cc45b3ea7d34a92a9b8, type: 3}
+  - key: gem
+    sprite: {fileID: 21300000, guid: e9e8a4783c3213342b996d3f9aaf3232, type: 3}
+  - key: heart
+    sprite: {fileID: 21300000, guid: bf776420b9c0d5446be323fd9e325cfe, type: 3}
+  - key: star
+    sprite: {fileID: 21300000, guid: 3cb48a1839f1f3b44b10ac77be792bfa, type: 3}
+  - key: rar_common
+    sprite: {fileID: 21300000, guid: e8b6d88478816a342adbecf6118ecc75, type: 3}
+  - key: rar_uncommon
+    sprite: {fileID: 21300000, guid: dcf91f00fc596934688c044bb90239ca, type: 3}
+  - key: rar_rare
+    sprite: {fileID: 21300000, guid: 8a90dbdb957f5aa4e9cf5ca3b610dd9c, type: 3}
+  - key: rar_legendary
+    sprite: {fileID: 21300000, guid: a3ac40c740ede2f49bc1cac9bede3334, type: 3}
+  - key: cursor
+    sprite: {fileID: 21300000, guid: e1b69f5959566894bb7bca9911330391, type: 3}
+  - key: arrow_l
+    sprite: {fileID: 21300000, guid: 8f65e2ce407ad05469ac5dde13a4237a, type: 3}
+  - key: arrow_r
+    sprite: {fileID: 21300000, guid: e7e7972f1b73896489e14a39044fb539, type: 3}
+  - key: font
+    sprite: {fileID: 21300000, guid: cf00dacdc17275f44831c29e88b59ffc, type: 3}
+  - key: flipper_glow
+    sprite: {fileID: 21300000, guid: aa022d0de5a22a24ebea3c420de207f9, type: 3}
