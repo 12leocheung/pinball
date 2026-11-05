@@ -252,9 +252,9 @@ namespace Pinball
             _sandboxBar.transform.SetParent(_root, false);
             _shopBtn = PixelBox.Draw(_sandboxBar.transform, new Vector2(-5.2f, 12.1f), 4.4f, 1.7f, Pal.Deep2, Pal.Alpha(Pal.Teal, 0.95f), 46);
             Ui.Text(_shopBtn.transform, "LIBRARY", Vector2.zero, Pal.Teal, 0.082f, TextAlign.Center, 51, true);
-            _breakBtn = PixelBox.Draw(_sandboxBar.transform, new Vector2(0f, 12.1f), 4.9f, 1.7f, Pal.Deep2, Pal.Alpha(Pal.Gold, 0.95f), 46);
+            _breakBtn = PixelBox.Draw(_sandboxBar.transform, new Vector2(0f, 12.1f), 4.4f, 1.7f, Pal.Deep2, Pal.Alpha(Pal.Gold, 0.95f), 46);
             Ui.Text(_breakBtn.transform, "BREAK BALL", Vector2.zero, Pal.Gold, 0.07f, TextAlign.Center, 51, true);
-            _endBtn = PixelBox.Draw(_sandboxBar.transform, new Vector2(6.1f, 12.1f), 2.7f, 1.7f, Pal.Deep2, Pal.Alpha(Pal.Rose, 0.95f), 46);
+            _endBtn = PixelBox.Draw(_sandboxBar.transform, new Vector2(5.2f, 12.1f), 4.4f, 1.7f, Pal.Deep2, Pal.Alpha(Pal.Rose, 0.95f), 46);
             Ui.Text(_endBtn.transform, "END", Vector2.zero, Pal.Rose, 0.09f, TextAlign.Center, 51, true);
             _sandboxBar.SetActive(false);
 

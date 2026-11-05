@@ -123,13 +123,14 @@ namespace Pinball
             // ---------------- unlocked items browser (from the main menu)
             _items = PixelBox.Draw(root, Vector2.zero, 27.6f, 22.6f, Pal.Deep, Pal.Alpha(Pal.Plum, 1f), 109);
             Ui.Text(_items.transform, "UNLOCKED", new Vector2(0f, 9.7f), Pal.Cream, 0.26f, TextAlign.Center, 112, true);
-            _itemsCount = Ui.Text(_items.transform, "", new Vector2(0f, 8.5f), Pal.Alpha(Pal.Sand, 0.9f), 0.08f, TextAlign.Center, 112);
+            _itemsCount = Ui.Text(_items.transform, "", new Vector2(0f, 8.2f), Pal.Alpha(Pal.Sand, 0.9f), 0.08f, TextAlign.Center, 112);
             _itemsGrid = new GameObject("ItemsGrid");
             _itemsGrid.transform.SetParent(_items.transform, false);
-            _itemsPrev = MkBtn(_items.transform, "< PREV", new Vector2(-9.4f, -9.0f), 4.6f, 1.5f, Pal.Sky);
-            _itemsNext = MkBtn(_items.transform, "NEXT >", new Vector2(9.4f, -9.0f), 4.6f, 1.5f, Pal.Sky);
+            // the items panel draws at 109, so its buttons need to sit above it
+            _itemsPrev = MkBtn(_items.transform, "< PREV", new Vector2(-9.4f, -9.0f), 4.6f, 1.5f, Pal.Sky, 112);
+            _itemsNext = MkBtn(_items.transform, "NEXT >", new Vector2(9.4f, -9.0f), 4.6f, 1.5f, Pal.Sky, 112);
             _itemsPageTxt = Ui.Text(_items.transform, "", new Vector2(0f, -9.0f), Pal.Alpha(Pal.Sand, 0.9f), 0.09f, TextAlign.Center, 112);
-            _itemsBack = MkBtn(_items.transform, "BACK", new Vector2(0f, -11.1f), 6.4f, 1.5f, Pal.Rose);
+            _itemsBack = MkBtn(_items.transform, "BACK", new Vector2(0f, -11.1f), 6.4f, 1.5f, Pal.Rose, 112);
             _items.SetActive(false);
 
             HideAll();
@@ -142,12 +143,12 @@ namespace Pinball
             Ui.Text(parent, desc, new Vector2(-7.2f, y), Pal.Alpha(Pal.Sand, 0.95f), 0.085f, TextAlign.Left, 112);
         }
 
-        static Btn MkBtn(Transform parent, string label, Vector2 pos, float w, float h, Color accent)
+        static Btn MkBtn(Transform parent, string label, Vector2 pos, float w, float h, Color accent, int order = 101)
         {
             var b = new Btn();
-            b.root = PixelBox.Draw(parent, pos, w, h, Pal.Deep2, accent, 101);
+            b.root = PixelBox.Draw(parent, pos, w, h, Pal.Deep2, accent, order);
             b.rect = new Rect(pos.x - w * 0.5f, pos.y - h * 0.5f, w, h);
-            b.label = Ui.Text(b.root.transform, label, Vector2.zero, Pal.Cream, 0.115f, TextAlign.Center, 104, true);
+            b.label = Ui.Text(b.root.transform, label, Vector2.zero, Pal.Cream, 0.115f, TextAlign.Center, order + 3, true);
             return b;
         }
 

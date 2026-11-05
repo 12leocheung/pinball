@@ -164,7 +164,7 @@ namespace Pinball
             _libTabWild.gameObject.SetActive(false);
 
             // coins live inside the BAG header bar now, clear of the bag rows below
-            _coinText = Ui.Text(_root, "0", new Vector2(LeftX + 5.9f, 11.4f), Pal.Gold, 0.09f, TextAlign.Right, 51, true);
+            _coinText = Ui.Text(_root, "0", new Vector2(LeftX + 5.9f, 11.4f), Pal.Gold, 0.105f, TextAlign.Right, 51, true);
             _coinIcon = SpriteBank.Make("coin", _root, 51, new Vector2(LeftX + 3.9f, 11.4f));
             _coinIcon.transform.localScale = Vector3.one * 0.8f;
 

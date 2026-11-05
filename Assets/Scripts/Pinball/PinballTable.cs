@@ -158,10 +158,6 @@ namespace Pinball
             _sr.sharedMaterial = SpriteBank.Mat;
             _sr.sortingOrder = 18;
             _sr.transform.localScale = Vector3.one;
-            // the right flipper is the left art spun 180: without the extra
-            // horizontal mirror its taper curves the wrong way and it looks
-            // upside-down next to the left one
-            _sr.flipX = !left;
 
             transform.localRotation = Quaternion.Euler(0f, 0f, _angle);
         }
