@@ -7,11 +7,14 @@ namespace Pinball
 
     public class RunStats
     {
+        // BumperHits and ModulesHit only bank hits from the current ball;
+        // FullCharges / conditionsDone / BestBallAlive keep spanning the round.
         public int BumperHits;
         public int FullCharges;
         public int HoldCatches;
         public int ConditionsThisRound;
         public readonly HashSet<string> ModulesHit = new HashSet<string>();
+        public readonly HashSet<string> RoundModulesHit = new HashSet<string>();
         public float BallAlive;
         public float BestBallAlive;
         public int SingleBallScore;
@@ -23,6 +26,8 @@ namespace Pinball
             BallAlive = 0f;
             SingleBallScore = 0;
             TopHalfScore = 0;
+            BumperHits = 0;
+            ModulesHit.Clear();
         }
     }
 
@@ -144,6 +149,7 @@ namespace Pinball
         GameObject _breakBtn;
         GameObject _endBtn;
         GameObject _pauseBtn;
+        GameObject _launchBtn;
         // top centre band: above the table (which ends at y 11) and clear of the
         // launch charge bar at the bottom, so nothing overlaps on a phone either
         static readonly Rect SandboxShopRect = new Rect(-7.4f, 11.25f, 4.4f, 1.7f);
@@ -246,11 +252,17 @@ namespace Pinball
             _sandboxBar.transform.SetParent(_root, false);
             _shopBtn = PixelBox.Draw(_sandboxBar.transform, new Vector2(-5.2f, 12.1f), 4.4f, 1.7f, Pal.Deep2, Pal.Alpha(Pal.Teal, 0.95f), 46);
             Ui.Text(_shopBtn.transform, "LIBRARY", Vector2.zero, Pal.Teal, 0.082f, TextAlign.Center, 51, true);
-            _breakBtn = PixelBox.Draw(_sandboxBar.transform, new Vector2(0f, 12.1f), 4.4f, 1.7f, Pal.Deep2, Pal.Alpha(Pal.Gold, 0.95f), 46);
-            Ui.Text(_breakBtn.transform, "BREAK BALL", Vector2.zero, Pal.Gold, 0.085f, TextAlign.Center, 51, true);
-            _endBtn = PixelBox.Draw(_sandboxBar.transform, new Vector2(5.2f, 12.1f), 4.4f, 1.7f, Pal.Deep2, Pal.Alpha(Pal.Rose, 0.95f), 46);
+            _breakBtn = PixelBox.Draw(_sandboxBar.transform, new Vector2(0f, 12.1f), 4.9f, 1.7f, Pal.Deep2, Pal.Alpha(Pal.Gold, 0.95f), 46);
+            Ui.Text(_breakBtn.transform, "BREAK BALL", Vector2.zero, Pal.Gold, 0.07f, TextAlign.Center, 51, true);
+            _endBtn = PixelBox.Draw(_sandboxBar.transform, new Vector2(6.1f, 12.1f), 2.7f, 1.7f, Pal.Deep2, Pal.Alpha(Pal.Rose, 0.95f), 46);
             Ui.Text(_endBtn.transform, "END", Vector2.zero, Pal.Rose, 0.09f, TextAlign.Center, 51, true);
             _sandboxBar.SetActive(false);
+
+            // ---- touch launch button: a fixed spot to press for the plunger,
+            // sitting beside the charge bar so the finger never covers the fill
+            _launchBtn = PixelBox.Draw(_root, new Vector2(-7.85f, -11.7f), 3.0f, 1.5f, Pal.Deep2, Pal.Alpha(Pal.Pink, 0.95f), 52);
+            Ui.Text(_launchBtn.transform, "LAUNCH", Vector2.zero, Pal.White, 0.075f, TextAlign.Center, 54, true);
+            _launchBtn.SetActive(false);
 
             // ---- touch pause button (hidden until a finger is actually used)
             _pauseBtn = PixelBox.Draw(_root, new Vector2(22.4f, 11.6f), 2.4f, 1.9f, Pal.Alpha(Pal.Deep2, 0.92f), Pal.Alpha(Pal.Cream, 0.85f), 52);
@@ -285,6 +297,8 @@ namespace Pinball
             else if (overShop) gm.OpenSandboxShop();
             else if (overBreak) gm.BreakBall();
             else if (overEnd) gm.EndSandbox();
+            // the launch button is read straight from the bottom-strip touch zone
+            // (TouchLaunch already maps it), it only exists to show where to press
         }
 
         public void Refresh()
@@ -298,17 +312,19 @@ namespace Pinball
             {
                 _touchHint = InputHub.UsedTouch;
                 _hint.Set(_touchHint
-                    ? "TAP SIDES: FLIP\nBOTTOM STRIP: CHARGE"
+                    ? "TAP SIDES: FLIP\nHOLD LAUNCH TO CHARGE"
                     : "SPACE: CHARGE LAUNCH\nARROWS: FLIP  Q/E: NUDGE");
             }
-            _score.Set(Ui.Fmt(gm.Score));
+            // shrink long scores so a million+ run still fits inside the panel
+            string scoreTxt = Ui.Fmt(gm.Score);
+            _score.SetPixel(Mathf.Min(0.3f, 10.9f / (6f * Mathf.Max(1, scoreTxt.Length))));
+            _score.Set(scoreTxt);
             if (sb)
             {
-                _quotaLabel.Set("SESSION");
-                _quota.Set(Ui.Clock(gm.SandboxClock));
-                _quota.SetColor(gm.SandboxClock <= 45f ? Pal.Rose : Pal.Teal);
-                _scoreBar.Set(gm.SandboxClock / GameManager.SandboxLength);
-                _scoreBar.SetColor(gm.SandboxClock <= 45f ? Pal.Rose : Pal.Teal);
+                _quotaLabel.Set("FREE PLAY");
+                _quota.Set("");
+                _scoreBar.Set(1f);
+                _scoreBar.SetColor(Pal.Teal);
             }
             else
             {
@@ -336,6 +352,7 @@ namespace Pinball
             if (_sandboxBar.activeSelf != sandboxUi) _sandboxBar.SetActive(sandboxUi);
             bool pauseUi = InputHub.UsedTouch && gm.Phase == Phase.Play;
             if (_pauseBtn.activeSelf != pauseUi) _pauseBtn.SetActive(pauseUi);
+            if (_launchBtn.activeSelf != pauseUi) _launchBtn.SetActive(pauseUi);
 
             if (gm.Boss != null)
             {
@@ -441,9 +458,6 @@ namespace Pinball
         public int BestScore;
         public int Combo;
         public bool Sandbox;
-        public float SandboxClock;
-        public const float SandboxLength = 300f;
-        public static int SandboxCredits;
         const float ComboWindow = 1.6f;
         float _comboTimer;
         bool _quotaCeleb;
@@ -466,13 +480,36 @@ namespace Pinball
         bool _bestCelebrated;
         float _runClock;
 
+        /// <summary>Every owned/bought item and wildcard, saved as a ';'-list so the
+        /// menu can show exactly what each thing does.</summary>
+        public readonly HashSet<string> UnlockedIds = new HashSet<string>();
+
+        public void Unlock(string id)
+        {
+            if (string.IsNullOrEmpty(id) || UnlockedIds.Contains(id)) return;
+            UnlockedIds.Add(id);
+            var sb = new System.Text.StringBuilder();
+            foreach (var u in UnlockedIds) { if (sb.Length > 0) sb.Append(';'); sb.Append(u); }
+            PlayerPrefs.SetString("pb_unlocked", sb.ToString());
+            PlayerPrefs.Save();
+        }
+
+        void LoadUnlocked()
+        {
+            UnlockedIds.Clear();
+            var raw = PlayerPrefs.GetString("pb_unlocked", "");
+            if (string.IsNullOrEmpty(raw)) return;
+            foreach (var id in raw.Split(';'))
+                if (!string.IsNullOrEmpty(id)) UnlockedIds.Add(id);
+        }
+
         public void Boot()
         {
             I = this;
             BestEver = PlayerPrefs.GetInt("pb_best", 0);
             BestRound = PlayerPrefs.GetInt("pb_round", 0);
-            SandboxCredits = PlayerPrefs.GetInt("pb_sandbox_credits", 0);
             Juice.Calm = PlayerPrefs.GetInt("pb_calm", 0) == 1;
+            LoadUnlocked();
 
             var tableGO = new GameObject("Table");
             tableGO.transform.SetParent(transform, false);
@@ -506,7 +543,6 @@ namespace Pinball
             InputHub.ForceEnabled = true;
             DemoMode = true;
             Sandbox = false;
-            SandboxClock = 0f;
             Phase = Phase.Menu;
             Round = 1;
             Quota = 0f;
@@ -584,7 +620,7 @@ namespace Pinball
         public int QuotaFor(int round)
         {
             float q = 2500f * Mathf.Pow(2.2f, round - 1);
-            if (Catalog.BossForRound(round) != null) q *= 1.35f;
+            if (round % 5 == 0) q *= 1.35f;
             return Mathf.RoundToInt(q / 10f) * 10;
         }
 
@@ -599,7 +635,6 @@ namespace Pinball
             Music.SetVariant(seed);
             DemoMode = false;
             Sandbox = false;
-            SandboxClock = 0f;
             InputHub.ForceEnabled = false;
             // the menu demo may still be holding a forced flipper down the frame you
             // pressed start - TickDemo never runs again to release it, so clear it here
@@ -625,7 +660,9 @@ namespace Pinball
         public void BeginRound()
         {
             Quota = Sandbox ? 0f : QuotaFor(Round);
-            Boss = Sandbox ? null : Catalog.BossForRound(Round);
+            // every boss round rolls its own opponent, so round 5 is never
+            // always the same boss
+            Boss = Sandbox || Round % 5 != 0 ? null : Catalog.RandomBoss(Rng);
             Table.ApplyBoss(Boss);
             Score = 0;
             Mult = 1f;
@@ -679,15 +716,6 @@ namespace Pinball
                     Table.Tick();
                     TrackBall();
                     UpdateWildcards(Time.deltaTime);
-                    if (Sandbox)
-                    {
-                        SandboxClock -= Time.deltaTime;
-                        if (SandboxClock <= 0f)
-                        {
-                            EndSandbox();
-                            break;
-                        }
-                    }
                     if (_comboTimer > 0f)
                     {
                         _comboTimer -= Time.deltaTime;
@@ -742,7 +770,9 @@ namespace Pinball
             {
                 case ConditionKind.BumperHits: return Stats.BumperHits;
                 case ConditionKind.SingleBallScore: return Mathf.Max(Stats.SingleBallScore, Stats.BestSingleBallScore);
-                case ConditionKind.ModuleHits: return Stats.ModulesHit.Count;
+                // comet stays round-spanning; every other module-hit wildcard
+                // only counts hits made with the current ball
+                case ConditionKind.ModuleHits: return d.id == "comet" ? Stats.RoundModulesHit.Count : Stats.ModulesHit.Count;
                 case ConditionKind.FullCharges: return Stats.FullCharges;
                 case ConditionKind.AliveTime: return Stats.BestBallAlive;
                 case ConditionKind.NoBottomScore: return Stats.TopHalfScore;
@@ -859,6 +889,7 @@ namespace Pinball
         public void OnModuleHit(BoardModule module, int value)
         {
             Stats.ModulesHit.Add(module.def.id);
+            Stats.RoundModulesHit.Add(module.def.id);
             module.Pulse();
             Sfx.Play("module");
             BumpCombo(module.transform.position);
@@ -987,13 +1018,6 @@ namespace Pinball
         void EndRound()
         {
             Table.ClearBall();
-            if (!Sandbox)
-            {
-                // every finished normal round pays out one stacking sandbox session
-                SandboxCredits++;
-                PlayerPrefs.SetInt("pb_sandbox_credits", SandboxCredits);
-                Juice.Float(new Vector2(0f, 1.6f), "+1 SANDBOX CREDIT", Pal.Teal, 1.15f, 1.5f, 2.4f);
-            }
             bool won = Score >= Quota;
             bool passedBest = Score > BestEver && BestEver > 0;
             _newBest = _newBest || passedBest;
@@ -1046,31 +1070,24 @@ namespace Pinball
 
         public void AddWildcard(WildcardDef def)
         {
-            // a sandbox gets exactly one wildcard slot, a normal run gets five
-            int cap = Sandbox ? 1 : 5;
-            if (Wildcards.Count >= cap) return;
+            // five slots everywhere (sandbox included), duplicates are fine
+            if (Wildcards.Count >= 5) return;
             Wildcards.Add(new WildcardInstance { def = def, progress = 0f });
             Juice.Float(new Vector2(0f, 3f), def.name, Pal.RarityColor(def.rarity), 1.3f, 1.4f, 2.2f);
         }
 
         // ---------------- sandbox ----------------
 
-        /// <summary>Starts a five minute practice session. Costs one stacking credit that
-        /// every finished normal round hands out.</summary>
+        /// <summary>Starts a free-play practice session: no timer, no credits,
+        /// just a table to build on.</summary>
         public void StartSandbox()
         {
-            if (SandboxCredits <= 0) return;
-            SandboxCredits--;
-            PlayerPrefs.SetInt("pb_sandbox_credits", SandboxCredits);
-            PlayerPrefs.Save();
-
             _newBest = false;
             _bestCelebrated = false;
             Seed = Random.Range(10000000, 100000000);
             Rng = new System.Random(Seed);
             Music.SetVariant(Seed);
             Sandbox = true;
-            SandboxClock = SandboxLength;
             DemoMode = false;
             InputHub.ForceEnabled = false;
             InputHub.ForceLeft = false;
@@ -1089,7 +1106,7 @@ namespace Pinball
             if (Menus.I != null) Menus.I.HideAll();
             _gameOver.SetActive(false);
             BeginRound();
-            ShowBanner("SANDBOX   " + Ui.Clock(SandboxClock), Pal.Teal, 2f);
+            ShowBanner("SANDBOX - FREE PLAY", Pal.Teal, 2f);
             if (ShopUi != null) ShopUi.Lock(0.25f);
             if (HudUi != null) HudUi.Refresh();
         }
@@ -1098,7 +1115,6 @@ namespace Pinball
         {
             if (!Sandbox) return;
             Sandbox = false;
-            SandboxClock = 0f;
             if (ShopUi != null) ShopUi.Hide();
             Table.ClearBall();
             EnterMenu();

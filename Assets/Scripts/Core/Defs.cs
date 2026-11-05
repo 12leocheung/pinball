@@ -210,7 +210,7 @@ namespace Pinball
 
         public static readonly WildcardDef[] Wildcards =
         {
-            new WildcardDef { id = "moon", name = "MOONLIT WICK", rarity = Rarity.Common, cond = ConditionKind.BumperHits, target = 12, reward = RewardKind.Mult, rewardValue = 2f, price = 5, sprite = "wild_moon", desc = "A SMALL FLAME IN THE DARK." },
+            new WildcardDef { id = "moon", name = "MOONLIT WICK", rarity = Rarity.Common, cond = ConditionKind.BumperHits, target = 10, reward = RewardKind.Mult, rewardValue = 2f, price = 5, sprite = "wild_moon", desc = "A SMALL FLAME IN THE DARK." },
             new WildcardDef { id = "sun", name = "BELL OF PLENTY", rarity = Rarity.Common, cond = ConditionKind.SingleBallScore, target = 700, reward = RewardKind.Coins, rewardValue = 4, price = 5, sprite = "wild_sun", desc = "EVERY RING A COIN." },
             new WildcardDef { id = "comet", name = "COMET TRAIL", rarity = Rarity.Uncommon, cond = ConditionKind.ModuleHits, target = 5, reward = RewardKind.Ball, rewardValue = 1, price = 7, sprite = "wild_comet", desc = "LEAVE A LITTLE LIGHT BEHIND." },
             new WildcardDef { id = "key", name = "IRON KEY", rarity = Rarity.Uncommon, cond = ConditionKind.FullCharges, target = 2, reward = RewardKind.Mult, rewardValue = 1.5f, price = 7, sprite = "wild_key", desc = "THE HARDER THE PULL." },
@@ -220,21 +220,20 @@ namespace Pinball
             new WildcardDef { id = "crown", name = "CRACKED CROWN", rarity = Rarity.Rare, cond = ConditionKind.RoundScore, target = 2500, reward = RewardKind.Coins, rewardValue = 12, price = 10, sprite = "wild_crown", desc = "BROKEN BUT STILL GOLD." },
             new WildcardDef { id = "flame", name = "GILDED HAND", rarity = Rarity.Legendary, cond = ConditionKind.RoundScore, target = 5000, reward = RewardKind.Coins, rewardValue = 20, price = 16, sprite = "wild_flame", desc = "EVERYTHING IT TOUCHES." },
             new WildcardDef { id = "bell", name = "TIDE MASK", rarity = Rarity.Legendary, cond = ConditionKind.ConditionsDone, target = 2, reward = RewardKind.Ball, rewardValue = 1, price = 16, sprite = "wild_bell", desc = "THE TIDE REMEMBERS." },
-            new WildcardDef { id = "acorn", name = "COPPER ACORN", rarity = Rarity.Common, cond = ConditionKind.BumperHits, target = 20, reward = RewardKind.Coins, rewardValue = 3, price = 4, sprite = "wild_acorn", desc = "A LUCKY LITTLE NUT." },
+            new WildcardDef { id = "acorn", name = "COPPER ACORN", rarity = Rarity.Common, cond = ConditionKind.BumperHits, target = 12, reward = RewardKind.Coins, rewardValue = 3, price = 4, sprite = "wild_acorn", desc = "A LUCKY LITTLE NUT." },
             new WildcardDef { id = "shell", name = "TIDE SHELL", rarity = Rarity.Common, cond = ConditionKind.RoundScore, target = 1200, reward = RewardKind.Mult, rewardValue = 1, price = 5, sprite = "wild_shell", desc = "IT HUMS WHEN THE SCORE RISES." },
             new WildcardDef { id = "wind", name = "STORM CHIME", rarity = Rarity.Uncommon, cond = ConditionKind.AliveTime, target = 20, reward = RewardKind.Coins, rewardValue = 7, price = 7, sprite = "wild_wind", desc = "THE WIND KEEPS COUNT." },
-            new WildcardDef { id = "vine", name = "GRAPEVINE", rarity = Rarity.Rare, cond = ConditionKind.ModuleHits, target = 7, reward = RewardKind.Score, rewardValue = 1200, price = 10, sprite = "wild_vine", desc = "EVERYTHING CONNECTS." },
+            new WildcardDef { id = "vine", name = "GRAPEVINE", rarity = Rarity.Rare, cond = ConditionKind.ModuleHits, target = 5, reward = RewardKind.Score, rewardValue = 1200, price = 10, sprite = "wild_vine", desc = "EVERYTHING CONNECTS." },
             new WildcardDef { id = "sand", name = "SANDGLASS", rarity = Rarity.Legendary, cond = ConditionKind.FullCharges, target = 4, reward = RewardKind.Mult, rewardValue = 4, price = 15, sprite = "wild_sand", desc = "TIME DRAINS. POWER POURS." },
-            new WildcardDef { id = "wanlantern", name = "WARD LANTERN", rarity = Rarity.Common, cond = ConditionKind.BumperHits, target = 15, reward = RewardKind.Coins, rewardValue = 4, price = 5, sprite = "wild_lantern", desc = "A LIGHT LEFT BURNING." },
-            new WildcardDef { id = "moth", name = "MOTH WING", rarity = Rarity.Common, cond = ConditionKind.ModuleHits, target = 4, reward = RewardKind.Coins, rewardValue = 5, price = 4, sprite = "wild_moth", desc = "DRAWN TO THE LIGHTS." },
+            new WildcardDef { id = "wanlantern", name = "WARD LANTERN", rarity = Rarity.Common, cond = ConditionKind.BumperHits, target = 10, reward = RewardKind.Coins, rewardValue = 4, price = 5, sprite = "wild_lantern", desc = "A LIGHT LEFT BURNING." },
             new WildcardDef { id = "knot", name = "KNOT OF WOOL", rarity = Rarity.Uncommon, cond = ConditionKind.AliveTime, target = 25, reward = RewardKind.Mult, rewardValue = 1.2f, price = 7, sprite = "wild_knot", desc = "KEEP IT TANGLED." },
             new WildcardDef { id = "tideglass", name = "TIDEGLASS", rarity = Rarity.Rare, cond = ConditionKind.FullCharges, target = 3, reward = RewardKind.Coins, rewardValue = 10, price = 10, sprite = "wild_tide", desc = "THE TIDE PULLS IN." },
             new WildcardDef { id = "fallenstar", name = "FALLEN STAR", rarity = Rarity.Rare, cond = ConditionKind.SingleBallScore, target = 3000, reward = RewardKind.Mult, rewardValue = 2.5f, price = 10, sprite = "wild_star", desc = "IT FELL FOR YOU." },
             new WildcardDef { id = "silkworm", name = "SILK WORM", rarity = Rarity.Legendary, cond = ConditionKind.ConditionsDone, target = 3, reward = RewardKind.Mult, rewardValue = 3f, price = 16, sprite = "wild_worm", desc = "TWO WILDCARDS FED IT. NOW THREE." },
 
             // ---- content pack III
-            new WildcardDef { id = "inkquill", name = "INK QUILL", rarity = Rarity.Common, cond = ConditionKind.BumperHits, target = 30, reward = RewardKind.Coins, rewardValue = 5, price = 5, sprite = "wild_inkquill", desc = "SIGNED IN COPPER." },
-            new WildcardDef { id = "bonecharm", name = "BONE CHARM", rarity = Rarity.Common, cond = ConditionKind.ModuleHits, target = 6, reward = RewardKind.Mult, rewardValue = 1.1f, price = 4, sprite = "wild_bonecharm", desc = "A SMALL LUCKY THING." },
+            new WildcardDef { id = "inkquill", name = "INK QUILL", rarity = Rarity.Common, cond = ConditionKind.BumperHits, target = 18, reward = RewardKind.Coins, rewardValue = 5, price = 5, sprite = "wild_inkquill", desc = "SIGNED IN COPPER." },
+            new WildcardDef { id = "bonecharm", name = "BONE CHARM", rarity = Rarity.Common, cond = ConditionKind.ModuleHits, target = 5, reward = RewardKind.Mult, rewardValue = 1.1f, price = 4, sprite = "wild_bonecharm", desc = "A SMALL LUCKY THING." },
             new WildcardDef { id = "copperring", name = "COPPER RING", rarity = Rarity.Common, cond = ConditionKind.RoundScore, target = 1800, reward = RewardKind.Coins, rewardValue = 6, price = 5, sprite = "wild_copperring", desc = "WORTH ITS WEIGHT." },
             new WildcardDef { id = "glasspetal", name = "GLASS PETAL", rarity = Rarity.Uncommon, cond = ConditionKind.AliveTime, target = 22, reward = RewardKind.Mult, rewardValue = 1.4f, price = 7, sprite = "wild_glasspetal", desc = "FRAGILE. PATIENT. BRIGHT." },
             new WildcardDef { id = "waxseal", name = "WAX SEAL", rarity = Rarity.Uncommon, cond = ConditionKind.FullCharges, target = 2, reward = RewardKind.Score, rewardValue = 900, price = 7, sprite = "wild_waxseal", desc = "PRESSED AND STAMPED." },
@@ -242,7 +241,7 @@ namespace Pinball
             new WildcardDef { id = "mothlight", name = "MOTH LIGHT", rarity = Rarity.Rare, cond = ConditionKind.HoldCatches, target = 1, reward = RewardKind.Mult, rewardValue = 1.6f, price = 10, sprite = "wild_mothlight", desc = "CAUGHT IN THE GLOW." },
             new WildcardDef { id = "deepbell", name = "DEEP BELL", rarity = Rarity.Rare, cond = ConditionKind.ConditionsDone, target = 2, reward = RewardKind.Coins, rewardValue = 14, price = 10, sprite = "wild_deepbell", desc = "IT RINGS FROM BELOW." },
             new WildcardDef { id = "sunwheel", name = "SUN WHEEL", rarity = Rarity.Rare, cond = ConditionKind.RoundScore, target = 4200, reward = RewardKind.Coins, rewardValue = 18, price = 10, sprite = "wild_sunwheel", desc = "SPIN IT UP." },
-            new WildcardDef { id = "blackflame", name = "BLACK FLAME", rarity = Rarity.Legendary, cond = ConditionKind.BumperHits, target = 60, reward = RewardKind.Mult, rewardValue = 3.5f, price = 16, sprite = "wild_blackflame", desc = "IT BURNS WITHOUT LIGHT." },
+            new WildcardDef { id = "blackflame", name = "BLACK FLAME", rarity = Rarity.Legendary, cond = ConditionKind.BumperHits, target = 40, reward = RewardKind.Mult, rewardValue = 3.5f, price = 16, sprite = "wild_blackflame", desc = "IT BURNS WITHOUT LIGHT." },
             new WildcardDef { id = "sundial", name = "SUN DIAL", rarity = Rarity.Legendary, cond = ConditionKind.AliveTime, target = 45, reward = RewardKind.Score, rewardValue = 5000, price = 16, sprite = "wild_sundial", desc = "FORTY FIVE SECONDS OF GRACE." },
             new WildcardDef { id = "kingseye", name = "KINGS EYE", rarity = Rarity.Legendary, cond = ConditionKind.SingleBallScore, target = 6000, reward = RewardKind.Coins, rewardValue = 25, price = 16, sprite = "wild_kingseye", desc = "ONE BALL. ONE CROWN." },
         };
@@ -281,6 +280,14 @@ namespace Pinball
             foreach (var w in Wildcards) if (w.rarity == r) pool.Add(w);
             if (pool.Count == 0) pool.Add(Wildcards[0]);
             return pool[rng.Next(pool.Count)];
+        }
+
+        /// <summary>Every boss round now rolls a fresh boss, so runs never see the same
+        /// layout of penalties twice in a row just because they reached round 5.</summary>
+        public static BossDef RandomBoss(System.Random rng)
+        {
+            if (Bosses == null || Bosses.Length == 0) return null;
+            return Bosses[rng.Next(Bosses.Length)];
         }
 
         public static BoardItemDef ItemById(string id)

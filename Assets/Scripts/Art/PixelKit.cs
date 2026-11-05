@@ -614,12 +614,15 @@ namespace Pinball
         public static Vector2 TouchPos;
         /// <summary>Last frame a finger was actually down: the pointer stays on the
         /// touch for the release frame instead of snapping to the desktop mouse.</summary>
-        public static float LastTouchAt = -99f;
+        static float LastTouchAt = -99f;
+        static bool _sawFirstTouch;
         static int _prevTouches;
         static bool _twoFinger;
+        static float _twoFingerAt;
+        static bool _twoFingerFired;
 
         // Touch: screen halves = flippers, bottom strip = plunger charge,
-        // two fingers together = pause. Touches also drive the simulated mouse,
+        // two fingers held together = pause. Both actions also drive the simulated mouse,
         // so every menu button keeps working on a phone.
         public static void TouchTick()
         {
@@ -628,12 +631,26 @@ namespace Pinball
             TouchBegin = TouchEnd = TouchPause = false;
             var touches = UnityEngine.InputSystem.EnhancedTouch.Touch.activeTouches;
             HasTouch = touches.Count > 0;
-            if (HasTouch) { UsedTouch = true; LastTouchAt = Time.unscaledTime; }
+            if (HasTouch)
+            {
+                UsedTouch = true;
+                LastTouchAt = Time.unscaledTime;
+                // first touch on mobile: ask for fullscreen right away so portrait
+                // screens stop showing a letterboxed window with browser UI around it
+                if (!_sawFirstTouch) { _sawFirstTouch = true; if (!Screen.fullScreen) Screen.fullScreen = true; }
+            }
             if (_prevTouches > 0 && touches.Count == 0) TouchEnd = true;
             _prevTouches = touches.Count;
 
-            if (touches.Count >= 2 && !_twoFinger) { _twoFinger = true; TouchPause = true; }
-            if (touches.Count == 0) _twoFinger = false;
+            // two fingers must be HELD briefly before the pause menu opens - most
+            // two-finger touches are just launch+flip at the same time
+            if (touches.Count >= 2 && !_twoFinger) { _twoFinger = true; _twoFingerAt = Time.unscaledTime; _twoFingerFired = false; }
+            if (touches.Count < 2) _twoFinger = false;
+            if (_twoFinger && !_twoFingerFired && Time.unscaledTime - _twoFingerAt > 0.35f)
+            {
+                _twoFingerFired = true;
+                TouchPause = true;
+            }
 
             for (int i = 0; i < touches.Count; i++)
             {

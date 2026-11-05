@@ -35,7 +35,7 @@ namespace Pinball
     {
         public Rigidbody2D rb;
         public bool InPlay;
-        public float maxSpeed = 29f;
+        public float maxSpeed = 32f;
         float _trail;
         bool _launched;
 
@@ -154,12 +154,14 @@ namespace Pinball
             spriteGO.transform.SetParent(transform, false);
             spriteGO.transform.localPosition = new Vector3(length * 0.5f, 0f, 0f);
             _sr = spriteGO.AddComponent<SpriteRenderer>();
-            // both sides use the unmirrored art - the rotation already points the
-            // bar correctly, so the fat end lands at the pivot on both sides
             _sr.sprite = SpriteBank.Get("flipper");
             _sr.sharedMaterial = SpriteBank.Mat;
             _sr.sortingOrder = 18;
             _sr.transform.localScale = Vector3.one;
+            // the right flipper is the left art spun 180: without the extra
+            // horizontal mirror its taper curves the wrong way and it looks
+            // upside-down next to the left one
+            _sr.flipX = !left;
 
             transform.localRotation = Quaternion.Euler(0f, 0f, _angle);
         }
@@ -248,6 +250,7 @@ namespace Pinball
 
         // coiled cannon: swallows the ball for a short charge, then launches it
         float _cannonTimer;
+        float _cannonCd;
         Ball _cannonBall;
 
         public void Init(BoardItemDef d, Vector2Int c, Vector2 worldPos)
@@ -311,11 +314,12 @@ namespace Pinball
                 case ItemKind.Trampoline:
                     if (def.id == "cannon")
                     {
-                        if (_cannonBall == null && !full)
+                        if (_cannonBall == null && !full && _cannonCd <= 0f)
                         {
                             // coil variant: capture the ball in the barrel, fire after a beat
                             _cannonBall = ball;
                             _cannonTimer = 0.5f;
+                            _cannonCd = 0.2f;
                             ball.rb.linearVelocity = Vector2.zero;
                             ball.rb.bodyType = RigidbodyType2D.Kinematic;
                             ball.rb.position = transform.position;
@@ -392,6 +396,7 @@ namespace Pinball
         void Update()
         {
             if (def != null && def.id == "cannon") TickCannon();
+            if (_cannonCd > 0f) _cannonCd -= Time.deltaTime;
             if (icon == null) return;
             _flash = Mathf.MoveTowards(_flash, 0f, Time.deltaTime * 5f);
             _squash = Mathf.MoveTowards(_squash, 0f, Time.deltaTime * 7f);
@@ -408,7 +413,11 @@ namespace Pinball
             if (def.kind == ItemKind.Lantern && GameManager.I != null)
             {
                 var b = GameManager.I.Table != null ? GameManager.I.Table.BallRef : null;
-                if (b != null && b.Launched && Vector2.Distance(b.transform.position, transform.position) < 4.2f)
+                // while the ball is still inside the shooter lane it hasn't really
+                // "come near" the item - otherwise launching past a lantern
+                // starts it scoring before the ball is even in play
+                if (b != null && b.Launched && b.transform.position.x <= PinballTable.LaneX - 0.4f &&
+                    Vector2.Distance(b.transform.position, transform.position) < 4.2f)
                 {
                     _pulse += Time.deltaTime;
                     icon.color = Color.Lerp(Pal.White, Pal.Gold, Mathf.PingPong(_pulse * 3f, 1f));
@@ -434,7 +443,13 @@ namespace Pinball
             if (b.InPlay)
             {
                 b.rb.bodyType = RigidbodyType2D.Dynamic;
+                // spawn the ball clear of the barrel, or the fresh contact overlap
+                // re-triggers the capture on the next frame and the ball never escapes
+                var outPos = (Vector2)transform.position + new Vector2(0f, 1.7f);
+                b.rb.position = outPos;
+                b.transform.position = outPos;
                 b.rb.linearVelocity = new Vector2(Random.Range(-2.2f, 2.2f), 23.5f);
+                _cannonCd = 0.6f;
                 Juice.Ring(transform.position, Pal.Cream, 0.6f, 3.4f, 0.5f);
                 Juice.Spark(transform.position + Vector3.up * 0.4f, Pal.Cream, 6, 6f);
                 GameManager.I.OnModuleHit(this, def.value);
@@ -494,12 +509,16 @@ namespace Pinball
         bool _kicked;
         float _leftPinSince;
         float _rightPinSince;
+        float _laneCalm;
 
         const float BoardLeft = -7f;
         const float BoardRight = 7f;
         const float BoardTop = 11f;
         const float BoardBottom = -11f;
-        const float LaneX = 4.8f;
+        /// <summary>Right edge of the playfield / left edge of the shooter lane.
+        /// Modules gate their scoring on this so a ball sliding up the launch
+        /// column never both-tick items on its way past.</summary>
+        public const float LaneX = 4.8f;
         const float LaneCenter = 5.9f;
         const float DrainY = -11.05f;
         const float StuckLoseTime = 3.5f;
@@ -579,7 +598,10 @@ namespace Pinball
                 {
                     var p = BoardGrid.Center(c, r);
                     foreach (var b in Bumpers)
-                        if (Vector2.Distance(p, b.transform.position) < 1.85f) Reserved.Add(new Vector2Int(c, r));
+                        // 1.6 keeps truly overlapping cells locked (the bumper collider is
+                    // 1.08 and most item art is ~1.4 wide) while freeing the borderline
+                    // seats just beside a bumper that used to be greyed out
+                    if (Vector2.Distance(p, b.transform.position) < 1.6f) Reserved.Add(new Vector2Int(c, r));
                 }
 
             // the cells straight above the flipper gap stay empty so the ball can always drain
@@ -703,6 +725,7 @@ namespace Pinball
             AwaitingLaunch = false;
             Charging = false;
             Charge = 0f;
+            _laneCalm = 0f;
             SetLaneGate(false);
             if (_plunger != null) _plunger.transform.localPosition = new Vector3(LaneCenter, _plungerBaseY, 0f);
         }
@@ -715,6 +738,7 @@ namespace Pinball
             Charge = 0f;
             _kicked = false;
             _stuckTime = 0f;
+            _laneCalm = 0f;
             _leftPinSince = _rightPinSince = 0f;
             Tilted = false;
             _nudgeCount = 0;
@@ -765,13 +789,25 @@ namespace Pinball
                     BallRef.Capture();
                     if (GameManager.I != null) GameManager.I.OnBallDrained();
                 }
-                else if (!AwaitingLaunch && bp.x > LaneX + 0.2f && bp.y < -8.6f && BallRef.rb.linearVelocity.magnitude < 1.4f)
+                else if (!AwaitingLaunch && bp.x > LaneX + 0.2f)
                 {
-                    // ball rolled back into the shooter lane: let the player plunge again
-                    AwaitingLaunch = true;
-                    Charging = false;
-                    Charge = 0f;
-                    _kicked = false;
+                    // the ball came back down the shooter lane: a slow one near the
+                    // bottom hands the plunger straight back, a parked one anywhere
+                    // in the lane gets re-plunged so it can never just sit and die
+                    _laneCalm = BallRef.rb.linearVelocity.magnitude < 2.2f ? _laneCalm + Time.fixedDeltaTime : 0f;
+                    if (_laneCalm > 0.3f)
+                    {
+                        _laneCalm = 0f;
+                        _kicked = false;
+                        SetLaneGate(false);
+                        if (bp.y < -8.6f)
+                        {
+                            AwaitingLaunch = true;
+                            Charging = false;
+                            Charge = 0f;
+                        }
+                        else PrepareBall();
+                    }
                 }
                 else if (TryFreePinnedBall(bp)) { /* pinned ball re-placed on the flipper */ }
                 else if (BallRef.rb.linearVelocity.sqrMagnitude < 0.25f)
@@ -860,7 +896,10 @@ namespace Pinball
             float c = Mathf.Max(Charge, 0.1f);
             Charging = false;
             AwaitingLaunch = false;
-            float speed = Mathf.Lerp(16.5f, 28.5f, c);
+            // the lowest charge still clears the kicker: the kicker needs ~24.3
+            // to climb from the plunger to the lane mouth, so anything weaker
+            // just rolled back down and sat dead in the column
+            float speed = Mathf.Lerp(24.5f, 30.5f, c);
             BallRef.Launch(new Vector2(0f, speed));
             if (!_saveUsed) _ballSave = 4.5f;
             Juice.Spark(BallRef.transform.position, Pal.Cream, 5, 5f, 0.7f);

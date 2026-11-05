@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -24,6 +25,24 @@ namespace Pinball
         bool _controlsOpen;
         float _spark;
 
+        // ---------------- unlocked items browser
+        GameObject _items;
+        GameObject _itemsGrid;
+        PixelText _itemsCount;
+        PixelText _itemsPageTxt;
+        bool _itemsOpen;
+        int _itemsPage;
+        float _itemsWheelCool;
+        class ItemRow
+        {
+            public GameObject root;
+            public PixelText name;
+            public PixelText desc;
+            public PixelText stat;
+        }
+        readonly List<ItemRow> _itemRows = new List<ItemRow>();
+        const int ItemsPerPage = 6;
+
         class Btn
         {
             public GameObject root;
@@ -31,9 +50,9 @@ namespace Pinball
             public PixelText label;
         }
 
-        Btn _play, _seed, _rnd, _mControls, _daily, _sandbox;
+        Btn _play, _seed, _rnd, _mControls, _daily, _sandbox, _mItems;
         Btn _resume, _restart, _pControls, _soundBtn, _musicBtn, _fxBtn, _fullBtn, _quit;
-        Btn _back;
+        Btn _back, _itemsBack, _itemsPrev, _itemsNext;
 
         public void Build()
         {
@@ -49,22 +68,23 @@ namespace Pinball
 
             _titleGroup = new GameObject("Title").transform;
             _titleGroup.SetParent(_main.transform, false);
-            Ui.Text(_titleGroup, "PINBALL", new Vector2(0f, 9.2f), Pal.Cream, 0.58f, TextAlign.Center, 100, true);
-            Ui.Text(_titleGroup, "ROGUELIKE", new Vector2(0f, 5.6f), Pal.Lilac, 0.26f, TextAlign.Center, 100, true);
+            Ui.Text(_titleGroup, "PINBOUND", new Vector2(0f, 9.2f), Pal.Cream, 0.56f, TextAlign.Center, 100, true);
+            Ui.Text(_titleGroup, "A PINBALL ROGUELIKE", new Vector2(0f, 5.6f), Pal.Lilac, 0.22f, TextAlign.Center, 100, true);
             SpriteBank.Make("rar_common", _titleGroup, 100, new Vector2(-6.2f, 5.6f)).transform.localScale = Vector3.one * 0.9f;
             SpriteBank.Make("rar_legendary", _titleGroup, 100, new Vector2(6.2f, 5.6f)).transform.localScale = Vector3.one * 0.9f;
 
-            _best = Ui.Text(_main.transform, "", new Vector2(0f, -10.4f), Pal.Alpha(Pal.Sand, 0.9f), 0.13f, TextAlign.Center, 100, true);
-            Ui.Text(_main.transform, "SAME SEED GIVES THE SAME SHOPS AND DROPS", new Vector2(0f, -11.5f), Pal.Alpha(Pal.Mauve, 0.95f), 0.08f, TextAlign.Center, 100);
-            Ui.Text(_main.transform, "FINISH A ROUND TO EARN A SANDBOX CREDIT", new Vector2(0f, -12.4f), Pal.Alpha(Pal.Mauve, 0.8f), 0.07f, TextAlign.Center, 100);
+            _best = Ui.Text(_main.transform, "", new Vector2(0f, -11.7f), Pal.Alpha(Pal.Sand, 0.9f), 0.13f, TextAlign.Center, 100, true);
+            Ui.Text(_main.transform, "SAME SEED GIVES THE SAME SHOPS AND DROPS", new Vector2(0f, -12.6f), Pal.Alpha(Pal.Mauve, 0.95f), 0.08f, TextAlign.Center, 100);
 
             _play = MkBtn(_main.transform, "PLAY", new Vector2(0f, 0.4f), 9.4f, 2.0f, Pal.Gold);
             _rnd = MkBtn(_main.transform, "RND", new Vector2(-6.8f, -1.9f), 3.6f, 1.6f, Pal.Sky);
             _seed = MkBtn(_main.transform, "SEED", new Vector2(2.1f, -1.9f), 10.8f, 1.6f, Pal.Mint);
             _seedLabel = _seed.label;
             _sandbox = MkBtn(_main.transform, "SANDBOX", new Vector2(0f, -4.2f), 9.4f, 2.0f, Pal.Teal);
-            _mControls = MkBtn(_main.transform, "CONTROLS", new Vector2(0f, -6.5f), 9.4f, 1.6f, Pal.Lilac);
-            _daily = MkBtn(_main.transform, "DAILY RUN", new Vector2(0f, -8.4f), 9.4f, 1.6f, Pal.Red);
+            _mItems = MkBtn(_main.transform, "ITEMS", new Vector2(0f, -6.5f), 9.4f, 1.6f, Pal.Gold);
+            _mControls = MkBtn(_main.transform, "CONTROLS", new Vector2(0f, -8.3f), 9.4f, 1.6f, Pal.Lilac);
+            // wide enough for the CLEARED variant of the label
+            _daily = MkBtn(_main.transform, "DAILY RUN", new Vector2(0f, -10.1f), 13.2f, 1.6f, Pal.Red);
 
             // ---------------- pause
             _pause = new GameObject("PauseMenu");
@@ -92,13 +112,25 @@ namespace Pinball
             Row(_controls.transform, 5.6f, "ARROWS", "FLIPPERS. A OR D WORK TOO");
             Row(_controls.transform, 3.6f, "SPACE", "HOLD TO CHARGE THE LAUNCH");
             Row(_controls.transform, 1.6f, "Q / E", "NUDGE THE BOARD. THREE = TILT");
-            Row(_controls.transform, -0.4f, "TOUCH", "LEFT/RIGHT HALF FLIPS. BOTTOM STRIP LAUNCHES");
+            Row(_controls.transform, -0.4f, "TOUCH", "SIDES FLIP. HOLD LAUNCH TO SHOOT");
             Row(_controls.transform, -2.4f, "TOUCH", "TAP CARDS TO BUY. DRAG ONTO THE BOARD");
             Row(_controls.transform, -4.4f, "R", "REROLL THE SHOP OFFERS");
-            Row(_controls.transform, -6.4f, "PAUSE", "ESC OR TWO FINGERS. F = FULLSCREEN");
+            Row(_controls.transform, -6.4f, "PAUSE", "ESC OR HOLD TWO FINGERS. F = FULLSCreen");
 
             Ui.Text(_controls.transform, "SAME SEED GIVES THE SAME SHOPS AND DROPS", new Vector2(0f, -8.2f), Pal.Gold, 0.085f, TextAlign.Center, 112);
             _back = MkBtn(_controls.transform, "BACK", new Vector2(0f, -9.8f), 6.4f, 1.6f, Pal.Rose);
+
+            // ---------------- unlocked items browser (from the main menu)
+            _items = PixelBox.Draw(root, Vector2.zero, 27.6f, 22.6f, Pal.Deep, Pal.Alpha(Pal.Plum, 1f), 109);
+            Ui.Text(_items.transform, "UNLOCKED", new Vector2(0f, 9.7f), Pal.Cream, 0.26f, TextAlign.Center, 112, true);
+            _itemsCount = Ui.Text(_items.transform, "", new Vector2(0f, 8.5f), Pal.Alpha(Pal.Sand, 0.9f), 0.08f, TextAlign.Center, 112);
+            _itemsGrid = new GameObject("ItemsGrid");
+            _itemsGrid.transform.SetParent(_items.transform, false);
+            _itemsPrev = MkBtn(_items.transform, "< PREV", new Vector2(-9.4f, -9.0f), 4.6f, 1.5f, Pal.Sky);
+            _itemsNext = MkBtn(_items.transform, "NEXT >", new Vector2(9.4f, -9.0f), 4.6f, 1.5f, Pal.Sky);
+            _itemsPageTxt = Ui.Text(_items.transform, "", new Vector2(0f, -9.0f), Pal.Alpha(Pal.Sand, 0.9f), 0.09f, TextAlign.Center, 112);
+            _itemsBack = MkBtn(_items.transform, "BACK", new Vector2(0f, -11.1f), 6.4f, 1.5f, Pal.Rose);
+            _items.SetActive(false);
 
             HideAll();
         }
@@ -166,6 +198,12 @@ namespace Pinball
                 return;
             }
 
+            if (_itemsOpen)
+            {
+                TickItems(mouse, m);
+                return;
+            }
+
             if (InputHub.PausePressed)
             {
                 if (Paused) { TogglePause(); return; }
@@ -201,6 +239,7 @@ namespace Pinball
                 Hover(_rnd, _rnd.rect.Contains(m));
                 Hover(_seed, _seed.rect.Contains(m));
                 Hover(_mControls, _mControls.rect.Contains(m));
+                Hover(_mItems, _mItems.rect.Contains(m));
                 Hover(_daily, _daily.rect.Contains(m));
                 Hover(_sandbox, _sandbox.rect.Contains(m));
                 if (!mouse && !InputHub.EnterPressed) return;
@@ -222,6 +261,7 @@ namespace Pinball
                     Sfx.Play("click");
                 }
                 else if (mouse && _mControls.rect.Contains(m)) { _block = 0.2f; OpenControls(); }
+                else if (mouse && _mItems.rect.Contains(m)) { _block = 0.2f; OpenItems(); }
                 else if (mouse && _sandbox.rect.Contains(m)) StartSandboxFromMenu();
                 else if (mouse && _daily.rect.Contains(m)) StartDaily();
                 else if ((mouse && _play.rect.Contains(m)) || InputHub.EnterPressed) StartRunFromMenu();
@@ -263,6 +303,7 @@ namespace Pinball
             _pause.SetActive(false);
             if (SeedEditing) EndSeedEdit();
             CloseControls(true);
+            CloseItems(true);
         }
 
         public void ShowMain()
@@ -275,9 +316,9 @@ namespace Pinball
             bool done = PlayerPrefs.GetInt("pb_daily", 0) == DailySeed();
             _daily.label.Set(done ? "DAILY RUN - CLEAR" : "DAILY RUN");
             _daily.label.SetColor(done ? Pal.Mint : Pal.Cream);
-            int credits = GameManager.SandboxCredits;
-            _sandbox.label.Set(credits > 0 ? "SANDBOX   x" + credits : "SANDBOX   LOCKED");
-            _sandbox.label.SetColor(credits > 0 ? Pal.Cream : Pal.Alpha(Pal.Mauve, 1f));
+            // sandbox is a plain mode now: no credits, no lock
+            _sandbox.label.Set("SANDBOX");
+            _sandbox.label.SetColor(Pal.Cream);
             RefreshSeedLabel();
             RefreshSound();
         }
@@ -286,13 +327,6 @@ namespace Pinball
         {
             var gm = GameManager.I;
             if (gm == null) return;
-            if (GameManager.SandboxCredits <= 0)
-            {
-                Sfx.Play("click");
-                Juice.Float(new Vector2(0f, -2.6f), "FINISH A ROUND TO EARN A CREDIT", Pal.Rose, 1.05f, 1.4f, 2f);
-                Juice.Shake(0.08f);
-                return;
-            }
             _block = 0.3f;
             Sfx.Play("buy");
             gm.StartSandbox();
@@ -325,6 +359,133 @@ namespace Pinball
             _controlsOpen = true;
             _controls.SetActive(true);
             Sfx.Play("click");
+        }
+
+        // ---------------- unlocked items browser ----------------
+
+        List<object> UnlockedDefs()
+        {
+            var list = new List<object>();
+            var gm = GameManager.I;
+            if (gm == null || gm.UnlockedIds.Count == 0) return list;
+            foreach (var it in Catalog.Items) if (gm.UnlockedIds.Contains(it.id)) list.Add(it);
+            foreach (var w in Catalog.Wildcards) if (gm.UnlockedIds.Contains(w.id)) list.Add(w);
+            return list;
+        }
+
+        void OpenItems()
+        {
+            _itemsOpen = true;
+            _items.SetActive(true);
+            _itemsPage = 0;
+            RefreshItemsPage();
+            Sfx.Play("click");
+        }
+
+        void CloseItems(bool silent = false)
+        {
+            _itemsOpen = false;
+            if (_items != null) _items.SetActive(false);
+            if (!silent) Sfx.Play("click");
+        }
+
+        void TickItems(bool mouse, Vector2 m)
+        {
+            var list = UnlockedDefs();
+            int pages = Mathf.Max(1, Mathf.CeilToInt(list.Count / (float)ItemsPerPage));
+
+            // mouse wheel pages through the list, same rhythm as the shop library
+            _itemsWheelCool -= Time.unscaledDeltaTime;
+            if (Mouse.current != null && _itemsWheelCool <= 0f)
+            {
+                float w = Mouse.current.scroll.ReadValue().y;
+                if (w != 0f)
+                {
+                    _itemsWheelCool = 0.06f;
+                    _itemsPage = Mathf.Clamp(_itemsPage + (w > 0f ? -1 : 1), 0, pages - 1);
+                    RefreshItemsPage();
+                }
+            }
+
+            Hover(_itemsPrev, _itemsPrev.rect.Contains(m));
+            Hover(_itemsNext, _itemsNext.rect.Contains(m));
+            Hover(_itemsBack, _itemsBack.rect.Contains(m));
+            if (!mouse) return;
+            if (_itemsBack.rect.Contains(m)) { _block = 0.2f; CloseItems(); }
+            else if (_itemsPrev.rect.Contains(m)) { _itemsPage = Mathf.Clamp(_itemsPage - 1, 0, pages - 1); RefreshItemsPage(); }
+            else if (_itemsNext.rect.Contains(m)) { _itemsPage = Mathf.Clamp(_itemsPage + 1, 0, pages - 1); RefreshItemsPage(); }
+        }
+
+        static string StatLine(BoardItemDef d)
+        {
+            switch (d.kind)
+            {
+                case ItemKind.Bumper: return "+" + d.value + " PTS ON EVERY HIT";
+                case ItemKind.Trampoline: return d.id == "cannon"
+                    ? "GRABS THE BALL, THEN FIRES IT UP"
+                    : "+" + d.value + " PTS. THROWS THE BALL UP";
+                case ItemKind.Coin: return "+1 COIN PER HIT. 3 PER ROUND";
+                case ItemKind.Mult: return "+" + d.mult + " MULT ON EVERY HIT";
+                case ItemKind.Magnet: return "+" + d.value + " PTS. PULLS THE BALL";
+                case ItemKind.Lantern: return "+" + d.value + " PTS WHILE THE BALL IS NEAR";
+                case ItemKind.Hold: return "CATCHES A BALL FOR THE NEXT ROUND";
+                case ItemKind.Wall: return "SOLID. BINDS THE BALL";
+                default: return "";
+            }
+        }
+
+        void RefreshItemsPage()
+        {
+            var list = UnlockedDefs();
+            int pages = Mathf.Max(1, Mathf.CeilToInt(list.Count / (float)ItemsPerPage));
+            _itemsPage = Mathf.Clamp(_itemsPage, 0, pages - 1);
+            _itemsCount.Set("YOU OWN " + list.Count + " OF " + (Catalog.Items.Length + Catalog.Wildcards.Length));
+            _itemsPageTxt.Set("PAGE " + (_itemsPage + 1) + "/" + pages);
+
+            foreach (var r in _itemRows)
+                if (r.root != null) Destroy(r.root);
+            _itemRows.Clear();
+
+            int first = _itemsPage * ItemsPerPage;
+            for (int i = 0; i < ItemsPerPage; i++)
+            {
+                int idx = first + i;
+                if (idx >= list.Count) break;
+                float y = 6.5f - i * 2.55f;
+                var row = new ItemRow();
+                row.root = PixelBox.Draw(_itemsGrid.transform, new Vector2(0f, y), 25.4f, 2.25f, Pal.Alpha(Pal.Deep2, 0.85f), Pal.Alpha(Pal.Plum, 0.8f), 111);
+                row.root.name = "ItemRow" + i;
+
+                SpriteRenderer icon;
+                SpriteRenderer frame;
+                string nm, ds, st;
+                Color tint;
+                var item = list[idx] as BoardItemDef;
+                if (item != null)
+                {
+                    icon = SpriteBank.Make(item.sprite, row.root.transform, 113, new Vector2(-11.4f, 0f));
+                    tint = Pal.RarityColor(item.rarity);
+                    nm = item.name;
+                    ds = item.desc;
+                    st = StatLine(item);
+                }
+                else
+                {
+                    var wild = (WildcardDef)list[idx];
+                    icon = SpriteBank.Make(wild.sprite, row.root.transform, 113, new Vector2(-11.4f, 0f));
+                    tint = Pal.RarityColor(wild.rarity);
+                    nm = wild.name;
+                    ds = wild.ConditionText();
+                    st = "GIVES " + wild.RewardText();
+                }
+                icon.transform.localScale = Vector3.one * 0.72f;
+                frame = SpriteBank.Make("ui_solid", row.root.transform, 112, new Vector2(-12.6f, 0f), tint, "stripe");
+                frame.transform.localScale = new Vector3(0.06f, 2.1f, 1f);
+                row.name = Ui.Text(row.root.transform, nm, new Vector2(-10.2f, 0.62f), tint, 0.085f, TextAlign.Left, 113);
+                row.desc = Ui.Text(row.root.transform, ds, new Vector2(-10.2f, -0.35f), Pal.Alpha(Pal.Sand, 0.92f), 0.062f, TextAlign.Left, 113);
+                row.stat = Ui.Text(row.root.transform, st, new Vector2(-10.2f, -1.02f), Pal.Gold, 0.06f, TextAlign.Left, 113);
+                _itemRows.Add(row);
+            }
         }
 
         void CloseControls(bool silent = false)

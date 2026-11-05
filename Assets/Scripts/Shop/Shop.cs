@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 namespace Pinball
 {
@@ -55,6 +56,8 @@ namespace Pinball
         }
 
         PixelText _coinText;
+        SpriteRenderer _coinIcon;
+        GameObject _rerollRoot;
         PixelText _shopHeader;
         PixelText _libTabItems;
         PixelText _libTabWild;
@@ -76,6 +79,7 @@ namespace Pinball
         int _rerollCost = 2;
         int _earned;
         float _inputLock;
+        float _wheelCool;
 
         class Drag
         {
@@ -138,6 +142,8 @@ namespace Pinball
         static readonly Rect SellRect = R(15.7f, -9.05f, 12.4f, 2.4f);
         static readonly Rect ContinueRect = R(15.7f, -11.4f, 12.4f, 1.8f);
         static readonly Rect RerollRect = R(-15.7f, -11.4f, 12.4f, 1.8f);
+        // the six bag rows: a drop here always returns a tile to the inventory
+        static readonly Rect BagRect = R(LeftX, 0.85f, 12.2f, 17.6f);
 
         public void Build()
         {
@@ -157,9 +163,10 @@ namespace Pinball
             _libTabItems.gameObject.SetActive(false);
             _libTabWild.gameObject.SetActive(false);
 
-            _coinText = Ui.Text(_root, "0", new Vector2(LeftX + 4.4f, 9.7f), Pal.Gold, 0.1875f, TextAlign.Left, 51, true);
-            var coinIcon = SpriteBank.Make("coin", _root, 51, new Vector2(LeftX - 5.6f, 9.7f));
-            coinIcon.transform.localScale = Vector3.one * 0.95f;
+            // coins live inside the BAG header bar now, clear of the bag rows below
+            _coinText = Ui.Text(_root, "0", new Vector2(LeftX + 5.9f, 11.4f), Pal.Gold, 0.09f, TextAlign.Right, 51, true);
+            _coinIcon = SpriteBank.Make("coin", _root, 51, new Vector2(LeftX + 3.9f, 11.4f));
+            _coinIcon.transform.localScale = Vector3.one * 0.8f;
 
             // bag rows
             for (int i = 0; i < 6; i++)
@@ -180,6 +187,7 @@ namespace Pinball
 
             // reroll
             var rrBox = PixelBox.Draw(_root, new Vector2(RerollRect.center.x, RerollRect.center.y), RerollRect.width, RerollRect.height, Pal.Deep2, Pal.Alpha(Pal.Mint, 0.9f), 46);
+            _rerollRoot = rrBox;
             _rerollBg = rrBox.GetComponent<SpriteRenderer>();
             if (_rerollBg == null) _rerollBg = rrBox.transform.GetChild(0).GetComponent<SpriteRenderer>();
             _rerollText = Ui.Text(rrBox.transform, "REROLL  2", Vector2.zero, Pal.Mint, 0.125f, TextAlign.Center, 50, true);
@@ -291,6 +299,7 @@ namespace Pinball
             {
                 _libWild = false;
                 _libRow = _libStartRow = _libShownRow = 0;
+                _wheelCool = 0f;
                 _offers.Clear(); // sandbox never rolls stock; stale shop offers must not survive
             }
             else RerollOffers();
@@ -320,9 +329,7 @@ namespace Pinball
             for (int i = 0; i < 6; i++)
             {
                 var o = new Offer();
-                // a sandbox holds one wildcard, so once that slot is taken the stock is items only
-                bool wantWild = gm.Rng.NextDouble() < (gm.Sandbox ? 0.45 : 0.3);
-                if (wantWild && gm.Sandbox && gm.Wildcards.Count >= 1) wantWild = false;
+                bool wantWild = gm.Rng.NextDouble() < 0.3;
                 if (wantWild)
                 {
                     var w = Catalog.RandomWildcard(gm.Rng);
@@ -342,7 +349,10 @@ namespace Pinball
         void Refresh()
         {
             var gm = GameManager.I;
-            _coinText.Set(gm.Sandbox ? "FREE" : Ui.Fmt(gm.Coins));
+            _coinText.Set(Ui.Fmt(gm.Coins));
+            _coinText.gameObject.SetActive(!gm.Sandbox);
+            _coinIcon.gameObject.SetActive(!gm.Sandbox);
+            _rerollRoot.SetActive(!gm.Sandbox);
             _bagHeader.Set("BAG " + gm.Inventory.Count + "/6");
             _shopHeader.gameObject.SetActive(!gm.Sandbox);
             _libTabItems.gameObject.SetActive(gm.Sandbox);
@@ -374,7 +384,7 @@ namespace Pinball
                     card.price.Set(o.sold ? "" : o.price.ToString());
                     card.price.SetColor(gm.Coins >= o.price ? Pal.Gold : Pal.Rose);
                     card.gem.sprite = SpriteBank.Get("rar_" + rarity.ToString().ToLowerInvariant());
-                    card.rarity.Set(wild ? "WILD" : "");
+                    card.rarity.Set(""); // the little corner label is gone
                     card.bg.color = o.sold ? Pal.Ink : Color.Lerp(Pal.Deep2, Pal.RarityColor(rarity), 0.12f);
                     card.soldOverlay.gameObject.SetActive(o.sold);
                     card.soldText.gameObject.SetActive(o.sold);
@@ -412,11 +422,10 @@ namespace Pinball
             _continueText.Set(gm.Sandbox ? "BACK TO TABLE" : "NEXT ROUND");
             _sellText.Set("SELL SLOT - DRAG HERE");
             if (gm.Sandbox)
-                _result.Set("SANDBOX - EVERYTHING IS FREE\nLIBRARY TAKES ANY ITEM\nONE WILDCARD SLOT\n" + Ui.Clock(gm.SandboxClock) +
-                            " LEFT   CREDITS " + GameManager.SandboxCredits + "\nSEED " + gm.Seed);
+                _result.Set("SANDBOX - FREE PLAY\nEVERYTHING IS FREE\nFIVE WILDCARD SLOTS\nSEED " + gm.Seed);
             else
                 _result.Set("ROUND " + gm.Round + " CLEARED\n+" + _earned + " COINS   SCORE " + Ui.Fmt(gm.Score) +
-                            "\nNEXT QUOTA " + Ui.Fmt(gm.QuotaFor(gm.Round + 1)) + "\nSANDBOX CREDITS " + GameManager.SandboxCredits);
+                            "\nNEXT QUOTA " + Ui.Fmt(gm.QuotaFor(gm.Round + 1)));
         }
 
         public void Tick()
@@ -431,6 +440,22 @@ namespace Pinball
                 UpdateDrag(m);
                 if (InputHub.MouseReleased) EndDrag(m);
                 return;
+            }
+
+            // sandbox library: scroll the mouse wheel through the catalogue rows
+            if (GameManager.I.Sandbox)
+            {
+                _wheelCool -= Time.unscaledDeltaTime;
+                if (Mouse.current != null && _wheelCool <= 0f)
+                {
+                    float w = Mouse.current.scroll.ReadValue().y;
+                    if (w != 0f)
+                    {
+                        _wheelCool = 0.06f;
+                        int newRow = Mathf.Clamp(_libRow + (w > 0f ? -1 : 1), 0, MaxLibRow);
+                        if (newRow != _libRow) { _libRow = newRow; Sfx.Play("click"); BindLibrary(); }
+                    }
+                }
             }
 
             UpdateHover(m);
@@ -632,9 +657,9 @@ namespace Pinball
                 Juice.Float(new Vector2(0f, 10f), "BAG IS FULL", Pal.Rose, 1.1f, 1.1f, 1.8f);
                 return;
             }
-            if (o.isWild && gm.Wildcards.Count >= (gm.Sandbox ? 1 : 5))
+            if (o.isWild && gm.Wildcards.Count >= 5)
             {
-                Juice.Float(new Vector2(0f, 10f), gm.Sandbox ? "ONE WILDCARD PER SANDBOX" : "WILDCARD SLOTS FULL",
+                Juice.Float(new Vector2(0f, 10f), "WILDCARD SLOTS FULL",
                             Pal.Rose, 1.05f, 1.1f, 1.8f);
                 return;
             }
@@ -647,11 +672,13 @@ namespace Pinball
 
             if (o.isWild)
             {
+                gm.Unlock(o.wdef.id);
                 gm.AddWildcard(o.wdef);
                 Refresh();
                 return;
             }
 
+            gm.Unlock(o.item.id);
             gm.Inventory.Add(o.item);
             // a drag that started on the card buys and keeps hold of the tile; a tap
             // just drops it in the bag so the next touch can place it
@@ -667,11 +694,12 @@ namespace Pinball
             if (_libWild)
             {
                 if (index >= _libWilds.Count) return;
-                if (gm.Wildcards.Count >= 1)
+                if (gm.Wildcards.Count >= 5)
                 {
-                    Juice.Float(new Vector2(0f, 10f), "ONE WILDCARD PER SANDBOX", Pal.Rose, 1.05f, 1.1f, 1.8f);
+                    Juice.Float(new Vector2(0f, 10f), "WILDCARD SLOTS FULL", Pal.Rose, 1.05f, 1.1f, 1.8f);
                     return;
                 }
+                gm.Unlock(_libWilds[index].id);
                 gm.AddWildcard(_libWilds[index]);
                 Sfx.Play("buy");
                 Juice.Spark(new Vector2(0f, 6f), Pal.Gold, 8, 8f);
@@ -686,6 +714,7 @@ namespace Pinball
                 Juice.Float(new Vector2(0f, 10f), "BAG IS FULL", Pal.Rose, 1.1f, 1.1f, 1.8f);
                 return;
             }
+            gm.Unlock(_libItems[index].id);
             gm.Inventory.Add(_libItems[index]);
             Sfx.Play("buy");
             Juice.Spark(new Vector2(12f, 6f), Pal.Gold, 8, 8f);
@@ -721,7 +750,7 @@ namespace Pinball
                 card.name.SetColor(Pal.Cream);
                 card.price.Set("");
                 card.gem.sprite = SpriteBank.Get("rar_" + rarity.ToString().ToLowerInvariant());
-                card.rarity.Set(_libWild ? "WILD" : def.kind.ToString().ToUpperInvariant());
+                card.rarity.Set(""); // no corner type text
                 card.bg.color = Color.Lerp(Pal.Deep2, Pal.RarityColor(rarity), 0.12f);
                 card.soldOverlay.gameObject.SetActive(false);
                 card.soldText.gameObject.SetActive(false);
@@ -865,7 +894,9 @@ namespace Pinball
 
             if (_drag.item != null)
             {
-                if (BoardRect.Contains(m))
+                bool droppedInBag = BagRect.Contains(m);
+                bool droppedOnBoard = !droppedInBag && BoardRect.Contains(m);
+                if (droppedOnBoard)
                 {
                     var cell = DropCell(m);
                     if (gm.Table.IsCellFree(cell))
@@ -877,15 +908,23 @@ namespace Pinball
                         return;
                     }
                 }
-                // return to bag (or back to the original cell if it came from the board)
-                if (_drag.sourceCell.x >= 0)
-                {
-                    if (gm.Table.IsCellFree(_drag.sourceCell)) gm.Table.PlaceModule(_drag.item, _drag.sourceCell);
-                    else if (gm.Inventory.Count < 6) gm.Inventory.Add(_drag.item);
-                }
-                else if (gm.Inventory.Count < 6)
+                // a drop over the bag rows always returns the tile to the inventory -
+                // even when it came from the board and its cell is still open, which is
+                // what used to snap board tiles straight back out of the bag
+                if (gm.Inventory.Count < 6)
                 {
                     gm.Inventory.Add(_drag.item);
+                }
+                else if (_drag.sourceCell.x >= 0 && gm.Table.IsCellFree(_drag.sourceCell))
+                {
+                    gm.Table.PlaceModule(_drag.item, _drag.sourceCell);
+                }
+                else
+                {
+                    Juice.Float(new Vector2(0f, 10f), "BAG IS FULL", Pal.Rose, 1.05f, 1.1f, 1.6f);
+                    _drag.item = null; // board slot opened again by the drag start
+                    Refresh();
+                    return;
                 }
                 _drag.item = null;
                 Refresh();
@@ -948,7 +987,7 @@ namespace Pinball
                 }
             }
             if (tip == "" && SellRect.Contains(m)) tip = "DRAG A TILE HERE TO SELL IT\nFOR HALF ITS VALUE";
-            if (tip == "" && ContinueRect.Contains(m)) tip = sandbox ? "BACK TO THE TABLE\nTHE CLOCK STOPS IN THE SHOP" : "NEXT ROUND.\nTHE QUOTA GROWS";
+            if (tip == "" && ContinueRect.Contains(m)) tip = sandbox ? "BACK TO THE TABLE" : "NEXT ROUND.\nTHE QUOTA GROWS";
             if (tip == "" && RerollRect.Contains(m)) tip = sandbox ? "PAGE THROUGH THE LIBRARY\nSIX AT A TIME" : "NEW OFFERS\nFOR " + _rerollCost + " COINS";
             if (tip == "" && sandbox) tip = "TAP TO TAKE   HOLD TO READ";
             _tooltip.Set(tip);
