@@ -52,15 +52,17 @@
         updateBannerVisibility();
       }
 
-      // Firebase Realtime Database URL for the worldwide leaderboard, e.g.
-      //   "https://pinbound-default-rtdb.firebaseio.com"
-      // Leave empty to keep every score on this device only.
+      // Worldwide leaderboard. Upstash Redis is used when both of its values are
+      // set, otherwise the Firebase database URL, otherwise scores stay on this
+      // device. Nothing here is required for the game to run.
+      window.PINBOUND_REDIS_URL = "";
+      window.PINBOUND_REDIS_TOKEN = "";
       window.PINBOUND_FIREBASE_URL = "";
 
       var buildUrl = "Build";
       // bump on every deploy: the build files keep their names, so without this
       // browsers keep serving the previous player from cache
-      var buildVer = "20261106f";
+      var buildVer = "20261106g";
       var loaderUrl = buildUrl + "/Build.loader.js?v=" + buildVer;
       var config = {
         arguments: [],

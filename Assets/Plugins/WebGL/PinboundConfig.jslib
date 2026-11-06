@@ -1,15 +1,22 @@
 mergeInto(LibraryManager.library, {
-  // The Firebase Realtime Database URL, set in index.html as
+  // Leaderboard backend config, set in index.html. All three are optional: with
+  // none set the game keeps every score on the device.
+  //
+  //   window.PINBOUND_REDIS_URL   = "https://xxx.upstash.io";
+  //   window.PINBOUND_REDIS_TOKEN = "AX...";
   //   window.PINBOUND_FIREBASE_URL = "https://your-app-default-rtdb.firebaseio.com";
-  // Read once at boot; an empty string keeps the game on the on-device boards.
-  Pinbound_FirebaseUrl: function () {
-    var url = '';
-    if (typeof window !== 'undefined' && window.PINBOUND_FIREBASE_URL) {
-      url = String(window.PINBOUND_FIREBASE_URL);
+  function pinboundString(name) {
+    var value = '';
+    if (typeof window !== 'undefined' && window[name]) {
+      value = String(window[name]);
     }
-    var size = lengthBytesUTF8(url) + 1;
+    var size = lengthBytesUTF8(value) + 1;
     var buffer = _malloc(size);
-    stringToUTF8(url, buffer, size);
+    stringToUTF8(value, buffer, size);
     return buffer;
   }
+
+  Pinbound_RedisUrl: function () { return pinboundString('PINBOUND_REDIS_URL'); },
+  Pinbound_RedisToken: function () { return pinboundString('PINBOUND_REDIS_TOKEN'); },
+  Pinbound_FirebaseUrl: function () { return pinboundString('PINBOUND_FIREBASE_URL'); }
 });
