@@ -71,6 +71,7 @@ namespace Pinball
 
         public void Reset(Vector2 pos)
         {
+            SetVisible(true);
             rb.bodyType = RigidbodyType2D.Kinematic;
             rb.position = pos;
             rb.linearVelocity = Vector2.zero;
@@ -79,6 +80,12 @@ namespace Pinball
             transform.rotation = Quaternion.identity;
             _launched = false;
             InPlay = true;
+        }
+
+        public void SetVisible(bool on)
+        {
+            var sr = gameObject.GetComponent<SpriteRenderer>();
+            if (sr != null) sr.enabled = on;
         }
 
         public void Launch(Vector2 velocity)
@@ -723,6 +730,7 @@ namespace Pinball
             Charge = 0f;
             _laneCalm = 0f;
             SetLaneGate(false);
+            if (BallRef != null) BallRef.SetVisible(false);
             if (_plunger != null) _plunger.transform.localPosition = new Vector3(LaneCenter, _plungerBaseY, 0f);
         }
 

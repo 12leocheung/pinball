@@ -266,8 +266,11 @@ namespace Pinball
             for (int li = 0; li < lines.Length; li++)
             {
                 string line = lines[li];
-                float w = line.Length <= 0 ? 0f : (line.Length * PixelFont.Advance - 1f) * pixel;
-                float x0 = align == TextAlign.Center ? -w * 0.5f : (align == TextAlign.Right ? -w : 0f);
+                // glyph cells are 8px wide but advance only 6px, so centre on the
+                // cells' ink (first cell centre at -inkW/2 + 4px), not on the advance
+                float inkW = line.Length <= 0 ? 0f : ((line.Length - 1) * PixelFont.Advance + 8f) * pixel;
+                float x0 = align == TextAlign.Center ? -inkW * 0.5f + 4f * pixel
+                    : (align == TextAlign.Right ? -inkW + 4f * pixel : 0f);
                 float y0 = -li * PixelFont.LineHeight * pixel;
                 for (int ci = 0; ci < line.Length; ci++)
                 {

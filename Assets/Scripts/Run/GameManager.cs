@@ -253,7 +253,7 @@ namespace Pinball
             _shopBtn = PixelBox.Draw(_sandboxBar.transform, new Vector2(-5.2f, 12.1f), 4.4f, 1.7f, Pal.Deep2, Pal.Alpha(Pal.Teal, 0.95f), 46);
             Ui.Text(_shopBtn.transform, "LIBRARY", Vector2.zero, Pal.Teal, 0.082f, TextAlign.Center, 51, true);
             _breakBtn = PixelBox.Draw(_sandboxBar.transform, new Vector2(0f, 12.1f), 4.4f, 1.7f, Pal.Deep2, Pal.Alpha(Pal.Gold, 0.95f), 46);
-            Ui.Text(_breakBtn.transform, "BREAK BALL", Vector2.zero, Pal.Gold, 0.07f, TextAlign.Center, 51, true);
+            Ui.Text(_breakBtn.transform, "BREAK BALL", Vector2.zero, Pal.Gold, 0.062f, TextAlign.Center, 51, true);
             _endBtn = PixelBox.Draw(_sandboxBar.transform, new Vector2(5.2f, 12.1f), 4.4f, 1.7f, Pal.Deep2, Pal.Alpha(Pal.Rose, 0.95f), 46);
             Ui.Text(_endBtn.transform, "END", Vector2.zero, Pal.Rose, 0.09f, TextAlign.Center, 51, true);
             _sandboxBar.SetActive(false);
@@ -541,8 +541,24 @@ namespace Pinball
         float _demoFlip = 0.6f;
         float _demoFlipHold;
 
+        bool _lbOffered;
+
+        /// <summary>Offers name entry once per run, whichever way the run ends
+        /// (quota failed, or the player quits back to the menu mid-run).</summary>
+        void OfferLeaderboard()
+        {
+            if (_lbOffered || Sandbox) return;
+            if (LeaderboardUi.I == null) return;
+            int score = Mathf.Max(BestScore, Score);
+            if (score <= 0) return;
+            LeaderboardUi.OfferScore(score, Mathf.Max(1, Round), Daily);
+            _lbOffered = LeaderboardUi.Busy;
+        }
+
         public void EnterMenu()
         {
+            // quitting mid-run still counts: ask before the run is wiped
+            if (Phase != Phase.Menu) OfferLeaderboard();
             InputHub.ForceLeft = false;
             InputHub.ForceRight = false;
             InputHub.ForceEnabled = true;
@@ -636,6 +652,7 @@ namespace Pinball
         {
             _newBest = false;
             _bestCelebrated = false;
+            _lbOffered = false;
             Seed = seed > 0 ? seed : Random.Range(10000000, 100000000);
             Rng = new System.Random(Seed);
             Music.SetVariant(seed);
@@ -1066,7 +1083,7 @@ namespace Pinball
                             "\nSEED " + Seed);
                 _gameOver.SetActive(true);
                 // the run is over: offer name entry when the score makes a board
-                LeaderboardUi.OfferScore(Mathf.Max(BestScore, Score), roundReached, Daily);
+                OfferLeaderboard();
                 Sfx.Play("lose");
                 Juice.Flash(0.5f);
                 Juice.Shake(0.6f);
@@ -1095,6 +1112,7 @@ namespace Pinball
         {
             _newBest = false;
             _bestCelebrated = false;
+            _lbOffered = true; // sandbox scores never reach the boards
             Seed = Random.Range(10000000, 100000000);
             Rng = new System.Random(Seed);
             Music.SetVariant(Seed);
@@ -1144,6 +1162,9 @@ namespace Pinball
         public void OpenSandboxShop()
         {
             if (!Sandbox || Phase != Phase.Play) return;
+            // break the live ball instead of freezing it mid-table; a fresh one
+            // is spawned when the library closes
+            Table.ClearBall();
             Phase = Phase.Shop;
             HudUi.SetVisible(false);
             ShopUi.Show(0);
