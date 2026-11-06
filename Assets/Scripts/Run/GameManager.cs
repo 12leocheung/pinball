@@ -548,9 +548,16 @@ namespace Pinball
         void OfferLeaderboard()
         {
             if (_lbOffered || Sandbox) return;
-            if (LeaderboardUi.I == null) return;
             int score = Mathf.Max(BestScore, Score);
             if (score <= 0) return;
+            if (LeaderboardUi.I == null)
+            {
+                // the panels are built once at boot; rebuild rather than swallow
+                // the score when that instance is missing
+                var root = PixelDisplay.I != null ? PixelDisplay.I.worldRoot : null;
+                if (root == null) return;
+                gameObject.AddComponent<LeaderboardUi>().Build(root);
+            }
             LeaderboardUi.OfferScore(score, Mathf.Max(1, Round), Daily);
             _lbOffered = LeaderboardUi.Busy;
         }
@@ -991,6 +998,9 @@ namespace Pinball
 
         void GameOverTick()
         {
+            // keep retrying until the prompt really opens: a failed open used to
+            // lose the score for good, whatever it was
+            if (!_lbOffered && !Sandbox) OfferLeaderboard();
             // the name prompt owns the screen until it is saved or skipped
             if (LeaderboardUi.Busy) return;
             // keyboard / gamepad only: StartPressed also counts a mouse click, which

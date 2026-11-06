@@ -52,10 +52,15 @@
         updateBannerVisibility();
       }
 
+      // Firebase Realtime Database URL for the worldwide leaderboard, e.g.
+      //   "https://pinbound-default-rtdb.firebaseio.com"
+      // Leave empty to keep every score on this device only.
+      window.PINBOUND_FIREBASE_URL = "";
+
       var buildUrl = "Build";
       // bump on every deploy: the build files keep their names, so without this
       // browsers keep serving the previous player from cache
-      var buildVer = "20261106e";
+      var buildVer = "20261106f";
       var loaderUrl = buildUrl + "/Build.loader.js?v=" + buildVer;
       var config = {
         arguments: [],

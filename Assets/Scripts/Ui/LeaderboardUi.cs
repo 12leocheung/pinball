@@ -29,7 +29,8 @@ namespace Pinball
         bool _boardsOpen;
         LbBoard _tab = LbBoard.Main;
         Brd _tabDaily, _tabMain, _tabAll, _back;
-        PixelText _subtitle, _empty;
+        PixelText _subtitle, _empty, _status;
+        int _seenGlobal;
         readonly List<PixelText> _ranks = new List<PixelText>();
         readonly List<PixelText> _names = new List<PixelText>();
         readonly List<PixelText> _scores = new List<PixelText>();
@@ -92,7 +93,7 @@ namespace Pinball
             }
 
             _empty = Ui.Text(_boards.transform, "", new Vector2(0f, 0.4f), Pal.Alpha(Pal.Mauve, 0.95f), 0.1f, TextAlign.Center, 112);
-            Ui.Text(_boards.transform, "SCORES ARE SAVED ON THIS DEVICE", new Vector2(0f, -6.6f), Pal.Alpha(Pal.Mauve, 0.85f), 0.065f, TextAlign.Center, 112);
+            _status = Ui.Text(_boards.transform, "SAVED ON THIS DEVICE", new Vector2(0f, -6.6f), Pal.Alpha(Pal.Mauve, 0.85f), 0.065f, TextAlign.Center, 112);
             _back = Mk(_boards.transform, "BACK", new Vector2(0f, -8.2f), 6.4f, 1.5f, Pal.Rose, 112);
         }
 
@@ -139,6 +140,8 @@ namespace Pinball
             _block = 0.2f;
             _boards.SetActive(true);
             RefreshBoards();
+            GlobalBoard.Refresh(this);
+            _seenGlobal = GlobalBoard.Version;
             Sfx.Play("click");
         }
 
@@ -151,10 +154,18 @@ namespace Pinball
 
         void RefreshBoards()
         {
-            var list = Lb.Top(_tab);
-            _subtitle.Set(_tab == LbBoard.Daily ? "TODAY'S DAILY RUNS"
+            bool global = GlobalBoard.Online;
+            var list = global ? GlobalBoard.Top(_tab) : Lb.Top(_tab);
+            _subtitle.Set((_tab == LbBoard.Daily ? "TODAY'S DAILY RUNS"
                         : _tab == LbBoard.Main ? "BEST MAIN-MODE RUNS"
-                        : "EVERY RUN, EVERY MODE");
+                        : "EVERY RUN, EVERY MODE") + (global ? " - WORLDWIDE" : ""));
+            if (_status != null)
+            {
+                _status.Set(global ? "LIVE WORLDWIDE BOARD"
+                                 : GlobalBoard.Configured ? "CONNECTING - SHOWING THIS DEVICE"
+                                 : "SAVED ON THIS DEVICE");
+                _status.SetColor(global ? Pal.Mint : Pal.Alpha(Pal.Mauve, 0.85f));
+            }
             _modeHead.gameObject.SetActive(_tab == LbBoard.AllTime);
             SetTabColor(_tabDaily, _tab == LbBoard.Daily);
             SetTabColor(_tabMain, _tab == LbBoard.Main);
@@ -234,6 +245,9 @@ namespace Pinball
             I._namePanel.SetActive(true);
             I.RefreshPrompt();
             I.HookChars(true);
+            // look up where this score sits worldwide while the player types
+            GlobalBoard.Refresh(I, score, I._pendingBoards[0]);
+            I._seenGlobal = GlobalBoard.Version;
             Sfx.Play("click");
         }
 
@@ -263,10 +277,18 @@ namespace Pinball
             _nameBoards.Set("TOP 10 - " + string.Join(" + ", parts.ToArray()));
 
             string mode = _pendingDaily ? "DAILY" : "MAIN";
-            int allRank = Lb.RankIfAdded(LbBoard.AllTime, _pendingScore);
-            _nameMode.Set(allRank > 0
-                ? "ALL TIME #" + allRank + " - " + mode + " MODE"
-                : "MODE " + mode);
+            if (GlobalBoard.Online)
+            {
+                int world = GlobalBoard.RankOf(LbBoard.AllTime, _pendingScore);
+                _nameMode.Set("WORLDWIDE #" + Mathf.Max(1, world) + " - " + mode + " MODE");
+            }
+            else
+            {
+                int allRank = Lb.RankIfAdded(LbBoard.AllTime, _pendingScore);
+                _nameMode.Set(allRank > 0
+                    ? "ALL TIME #" + allRank + " - " + mode + " MODE"
+                    : "MODE " + mode);
+            }
 
             for (int i = 0; i < 3; i++)
             {
@@ -355,6 +377,7 @@ namespace Pinball
             Lb.Submit(LbBoard.AllTime, name, _pendingScore, _pendingRound, mode);
             PlayerPrefs.SetString("pb_name", name);
             PlayerPrefs.Save();
+            GlobalBoard.SubmitScore(name, _pendingScore, _pendingRound, mode, this);
             Sfx.Play("save");
 
             LbBoard open = _pendingBoards.Contains(LbBoard.Daily) ? LbBoard.Daily
@@ -383,6 +406,12 @@ namespace Pinball
 
         void Update()
         {
+            // repaint once the worldwide fetch lands
+            if ((_boardsOpen || _nameOpen) && GlobalBoard.Version != _seenGlobal)
+            {
+                _seenGlobal = GlobalBoard.Version;
+                if (_nameOpen) RefreshPrompt(); else RefreshBoards();
+            }
             if (_nameOpen) { TickName(); return; }
             if (_boardsOpen) { TickBoards(); return; }
         }
