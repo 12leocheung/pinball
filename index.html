@@ -53,12 +53,15 @@
       }
 
       var buildUrl = "Build";
-      var loaderUrl = buildUrl + "/Build.loader.js";
+      // bump on every deploy: the build files keep their names, so without this
+      // browsers keep serving the previous player from cache
+      var buildVer = "20261106a";
+      var loaderUrl = buildUrl + "/Build.loader.js?v=" + buildVer;
       var config = {
         arguments: [],
-        dataUrl: buildUrl + "/Build.data",
-        frameworkUrl: buildUrl + "/Build.framework.js",
-        codeUrl: buildUrl + "/Build.wasm",
+        dataUrl: buildUrl + "/Build.data?v=" + buildVer,
+        frameworkUrl: buildUrl + "/Build.framework.js?v=" + buildVer,
+        codeUrl: buildUrl + "/Build.wasm?v=" + buildVer,
         streamingAssetsUrl: "StreamingAssets",
         companyName: "DefaultCompany",
         productName: "Pinbound",

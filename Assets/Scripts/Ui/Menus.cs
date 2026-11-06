@@ -85,8 +85,8 @@ namespace Pinball
             _mControls = MkBtn(_main.transform, "CONTROLS", new Vector2(0f, -8.3f), 9.4f, 1.6f, Pal.Lilac);
             // wide enough for the CLEARED variant of the label
             _daily = MkBtn(_main.transform, "DAILY RUN", new Vector2(0f, -10.1f), 13.2f, 1.6f, Pal.Red);
-            // small chip in the top corner so the stacked buttons keep their spacing
-            _mBoards = MkBtn(_main.transform, "BOARDS", new Vector2(18.4f, 11.4f), 5.6f, 1.6f, Pal.Lilac);
+            // in the main stack, in the gap under the subtitle, above PLAY
+            _mBoards = MkBtn(_main.transform, "LEADERBOARDS", new Vector2(0f, 2.7f), 9.4f, 1.6f, Pal.Lilac);
 
             // ---------------- pause
             _pause = new GameObject("PauseMenu");

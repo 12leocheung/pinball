@@ -66,9 +66,11 @@ namespace Pinball
 
         void BuildBoards(Transform root)
         {
+            // dim the menu behind the panel so its title cannot peek around the edges
+            SpriteBank.Quad(root, Vector2.zero, 64f, 44f, Pal.Alpha(Pal.Ink, 0.88f), 105);
             _boards = PixelBox.Draw(root, Vector2.zero, 28f, 22.6f, Pal.Deep, Pal.Alpha(Pal.Plum, 1f), 109);
             Ui.Text(_boards.transform, "LEADERBOARDS", new Vector2(0f, 9.9f), Pal.Cream, 0.26f, TextAlign.Center, 112, true);
-            _subtitle = Ui.Text(_boards.transform, "", new Vector2(0f, 8.7f), Pal.Gold, 0.08f, TextAlign.Center, 112);
+            _subtitle = Ui.Text(_boards.transform, "", new Vector2(0f, 8.35f), Pal.Gold, 0.08f, TextAlign.Center, 112);
 
             _tabDaily = Mk(_boards.transform, "DAILY", new Vector2(-9.2f, 7.0f), 7.8f, 1.5f, Pal.Sky, 112);
             _tabMain = Mk(_boards.transform, "MAIN", new Vector2(0f, 7.0f), 7.8f, 1.5f, Pal.Gold, 112);
@@ -107,7 +109,7 @@ namespace Pinball
             for (int i = 0; i < 3; i++)
             {
                 _slotBox[i] = PixelBox.Draw(box.transform, new Vector2(-3.6f + i * 3.6f, 0.6f), 3.0f, 3.6f, Pal.Deep2, Pal.Alpha(Pal.Gold, 0.9f), 120);
-                _slotText[i] = Ui.Text(_slotBox[i].transform, "A", Vector2.zero, Pal.Cream, 0.46f, TextAlign.Center, 123, true);
+                _slotText[i] = Ui.Text(_slotBox[i].transform, "A", Vector2.zero, Pal.Cream, 0.42f, TextAlign.Center, 123, true);
             }
 
             _prev = Mk(box.transform, "<", new Vector2(-8.0f, 0.6f), 2.6f, 3.6f, Pal.Sky, 120);
@@ -176,7 +178,8 @@ namespace Pinball
         void SetTabColor(Brd b, bool active)
         {
             if (b == null || b.label == null) return;
-            b.label.SetColor(active ? Pal.White : Pal.Alpha(Pal.Sand, 0.75f));
+            b.label.SetColor(active ? Pal.White : Pal.Alpha(Pal.Sand, 0.5f));
+            if (b.root != null) b.root.transform.localScale = active ? new Vector3(1f, 1.06f, 1f) : Vector3.one;
         }
 
         void SetRowVisible(int i, bool on)
