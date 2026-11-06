@@ -50,7 +50,7 @@ namespace Pinball
             public PixelText label;
         }
 
-        Btn _play, _seed, _rnd, _mControls, _daily, _sandbox, _mItems;
+        Btn _play, _seed, _rnd, _mControls, _daily, _sandbox, _mItems, _mBoards;
         Btn _resume, _restart, _pControls, _soundBtn, _musicBtn, _fxBtn, _fullBtn, _quit;
         Btn _back, _itemsBack, _itemsPrev, _itemsNext;
 
@@ -85,6 +85,8 @@ namespace Pinball
             _mControls = MkBtn(_main.transform, "CONTROLS", new Vector2(0f, -8.3f), 9.4f, 1.6f, Pal.Lilac);
             // wide enough for the CLEARED variant of the label
             _daily = MkBtn(_main.transform, "DAILY RUN", new Vector2(0f, -10.1f), 13.2f, 1.6f, Pal.Red);
+            // small chip in the top corner so the stacked buttons keep their spacing
+            _mBoards = MkBtn(_main.transform, "BOARDS", new Vector2(18.4f, 11.4f), 5.6f, 1.6f, Pal.Lilac);
 
             // ---------------- pause
             _pause = new GameObject("PauseMenu");
@@ -178,6 +180,9 @@ namespace Pinball
             var gm = GameManager.I;
             if (gm == null) return;
 
+            // the leaderboard panel and its name prompt take all input while open
+            if (LeaderboardUi.Busy) return;
+
             if (SeedEditing)
             {
                 TickSeedEditing();
@@ -243,6 +248,7 @@ namespace Pinball
                 Hover(_mItems, _mItems.rect.Contains(m));
                 Hover(_daily, _daily.rect.Contains(m));
                 Hover(_sandbox, _sandbox.rect.Contains(m));
+                Hover(_mBoards, _mBoards.rect.Contains(m));
                 if (!mouse && !InputHub.EnterPressed) return;
                 if (mouse && _seed.rect.Contains(m))
                 {
@@ -263,6 +269,7 @@ namespace Pinball
                 }
                 else if (mouse && _mControls.rect.Contains(m)) { _block = 0.2f; OpenControls(); }
                 else if (mouse && _mItems.rect.Contains(m)) { _block = 0.2f; OpenItems(); }
+                else if (mouse && _mBoards.rect.Contains(m)) { _block = 0.2f; LeaderboardUi.I.OpenBoards(LbBoard.Main); }
                 else if (mouse && _sandbox.rect.Contains(m)) StartSandboxFromMenu();
                 else if (mouse && _daily.rect.Contains(m)) StartDaily();
                 else if ((mouse && _play.rect.Contains(m)) || InputHub.EnterPressed) StartRunFromMenu();
@@ -305,6 +312,7 @@ namespace Pinball
             if (SeedEditing) EndSeedEdit();
             CloseControls(true);
             CloseItems(true);
+            if (LeaderboardUi.I != null) LeaderboardUi.I.CloseAll();
         }
 
         public void ShowMain()
@@ -352,7 +360,7 @@ namespace Pinball
             PlayerPrefs.Save();
             _block = 0.3f;
             Sfx.Play("buy");
-            GameManager.I.StartRun(DailySeed());
+            GameManager.I.StartRun(DailySeed(), true);
         }
 
         void OpenControls()

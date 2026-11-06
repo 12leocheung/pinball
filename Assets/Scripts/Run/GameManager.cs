@@ -458,6 +458,8 @@ namespace Pinball
         public int BestScore;
         public int Combo;
         public bool Sandbox;
+        /// <summary>True when the current run is today's daily-seed run.</summary>
+        public bool Daily;
         const float ComboWindow = 1.6f;
         float _comboTimer;
         bool _quotaCeleb;
@@ -525,9 +527,12 @@ namespace Pinball
             BuildOverlays();
 
             Sfx.Boot(transform);
-            Music.Boot(transform, 0);
-            MenusUi = gameObject.AddComponent<Menus>();
+            Music.Boot(transform, 0);            MenusUi = gameObject.AddComponent<Menus>();
+
             MenusUi.Build();
+
+            var boards = gameObject.AddComponent<LeaderboardUi>();
+            boards.Build(PixelDisplay.I.worldRoot);
 
             EnterMenu();
         }
@@ -543,6 +548,7 @@ namespace Pinball
             InputHub.ForceEnabled = true;
             DemoMode = true;
             Sandbox = false;
+            Daily = false;
             Phase = Phase.Menu;
             Round = 1;
             Quota = 0f;
@@ -626,7 +632,7 @@ namespace Pinball
 
         public void StartRun() { StartRun(0); }
 
-        public void StartRun(int seed)
+        public void StartRun(int seed, bool daily = false)
         {
             _newBest = false;
             _bestCelebrated = false;
@@ -635,6 +641,7 @@ namespace Pinball
             Music.SetVariant(seed);
             DemoMode = false;
             Sandbox = false;
+            Daily = daily;
             InputHub.ForceEnabled = false;
             // the menu demo may still be holding a forced flipper down the frame you
             // pressed start - TickDemo never runs again to release it, so clear it here
@@ -967,6 +974,8 @@ namespace Pinball
 
         void GameOverTick()
         {
+            // the name prompt owns the screen until it is saved or skipped
+            if (LeaderboardUi.Busy) return;
             // keyboard / gamepad only: StartPressed also counts a mouse click, which
             // would swallow the MAIN MENU click below and restart the run instead
             if (InputHub.EnterPressed || InputHub.LaunchPressed)
@@ -1056,6 +1065,8 @@ namespace Pinball
                             "\n\nBEST SCORE " + Ui.Fmt(BestEver) + "  -  BEST ROUND " + BestRound +
                             "\nSEED " + Seed);
                 _gameOver.SetActive(true);
+                // the run is over: offer name entry when the score makes a board
+                LeaderboardUi.OfferScore(Mathf.Max(BestScore, Score), roundReached, Daily);
                 Sfx.Play("lose");
                 Juice.Flash(0.5f);
                 Juice.Shake(0.6f);
@@ -1088,6 +1099,7 @@ namespace Pinball
             Rng = new System.Random(Seed);
             Music.SetVariant(Seed);
             Sandbox = true;
+            Daily = false;
             DemoMode = false;
             InputHub.ForceEnabled = false;
             InputHub.ForceLeft = false;
