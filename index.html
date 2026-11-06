@@ -55,14 +55,14 @@
       // Worldwide leaderboard. Upstash Redis is used when both of its values are
       // set, otherwise the Firebase database URL, otherwise scores stay on this
       // device. Nothing here is required for the game to run.
-      window.PINBOUND_REDIS_URL = "";
-      window.PINBOUND_REDIS_TOKEN = "";
+      window.PINBOUND_REDIS_URL = "https://mutual-whippet-193228.upstash.io";
+      window.PINBOUND_REDIS_TOKEN = "gQAAAAAAAvLMAQIgcDIzM2RmZDVkYmFjYjg0YTg2YjA3Nzk0NjViZjBhNjgyMQ";
       window.PINBOUND_FIREBASE_URL = "";
 
       var buildUrl = "Build";
       // bump on every deploy: the build files keep their names, so without this
       // browsers keep serving the previous player from cache
-      var buildVer = "20261106g";
+      var buildVer = "20261106h";
       var loaderUrl = buildUrl + "/Build.loader.js?v=" + buildVer;
       var config = {
         arguments: [],
