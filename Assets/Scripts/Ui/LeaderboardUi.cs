@@ -66,9 +66,10 @@ namespace Pinball
 
         void BuildBoards(Transform root)
         {
-            // dim the menu behind the panel so its title cannot peek around the edges
-            SpriteBank.Quad(root, Vector2.zero, 64f, 44f, Pal.Alpha(Pal.Ink, 0.88f), 105);
             _boards = PixelBox.Draw(root, Vector2.zero, 28f, 22.6f, Pal.Deep, Pal.Alpha(Pal.Plum, 1f), 109);
+            // dim the menu behind the panel so its title cannot peek around the edges;
+            // child of the panel, so it is hidden again when the panel closes
+            SpriteBank.Quad(_boards.transform, Vector2.zero, 64f, 44f, Pal.Alpha(Pal.Ink, 0.88f), 105);
             Ui.Text(_boards.transform, "LEADERBOARDS", new Vector2(0f, 9.9f), Pal.Cream, 0.26f, TextAlign.Center, 112, true);
             _subtitle = Ui.Text(_boards.transform, "", new Vector2(0f, 8.35f), Pal.Gold, 0.08f, TextAlign.Center, 112);
 
