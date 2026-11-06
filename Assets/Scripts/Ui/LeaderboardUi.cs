@@ -220,7 +220,9 @@ namespace Pinball
             if (daily && Lb.Qualifies(LbBoard.Daily, score)) I._pendingBoards.Add(LbBoard.Daily);
             if (!daily && Lb.Qualifies(LbBoard.Main, score)) I._pendingBoards.Add(LbBoard.Main);
             if (Lb.Qualifies(LbBoard.AllTime, score)) I._pendingBoards.Add(LbBoard.AllTime);
-            if (I._pendingBoards.Count == 0) return;
+            // every finished run gets asked for a name; the boards keep their own top 10,
+            // so a weak score falls off later instead of being silently dropped here
+            if (I._pendingBoards.Count == 0) I._pendingBoards.Add(daily ? LbBoard.Daily : LbBoard.Main);
 
             I._pendingScore = score;
             I._pendingRound = round;
@@ -347,8 +349,10 @@ namespace Pinball
         public void SubmitName(string name)
         {
             if (string.IsNullOrEmpty(name)) name = "AAA";
+            // exactly one row per run: the mode decides which boards it shows on,
+            // so writing one row per pending board used to create duplicates
             string mode = _pendingDaily ? "DAILY" : "MAIN";
-            foreach (var b in _pendingBoards) Lb.Submit(b, name, _pendingScore, _pendingRound, mode);
+            Lb.Submit(LbBoard.AllTime, name, _pendingScore, _pendingRound, mode);
             PlayerPrefs.SetString("pb_name", name);
             PlayerPrefs.Save();
             Sfx.Play("save");
